@@ -26,7 +26,7 @@ function parseHash(): Route {
 export default function App() {
   const [route, setRoute] = useState<Route>(parseHash)
   const { health, offline } = useHealth()
-  const { uploads, startUploads, dismiss, doneTick } = useUploads()
+  const { uploads, startUploads, cancel, doneTick } = useUploads()
 
   useEffect(() => {
     const onHash = () => setRoute(parseHash())
@@ -61,7 +61,7 @@ export default function App() {
           onOpen={goAnalysis}
           uploads={uploads}
           startUploads={startUploads}
-          dismissUpload={dismiss}
+          cancelUpload={cancel}
           uploadsDoneTick={doneTick}
         />
       )}

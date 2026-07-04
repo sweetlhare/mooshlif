@@ -21,7 +21,7 @@ const UPLOAD_COLOR = '#2f6fd6'
 
 /* ---------- Строка фоновой загрузки (файл ещё летит на сервер) ---------- */
 
-function UploadRow({ job, onDismiss }: { job: UploadJob; onDismiss: (tempId: string) => void }) {
+function UploadRow({ job, onCancel }: { job: UploadJob; onCancel: (tempId: string) => void }) {
   const err = job.phase === 'error'
   return (
     <div className={s.row}>
@@ -66,15 +66,16 @@ function UploadRow({ job, onDismiss }: { job: UploadJob; onDismiss: (tempId: str
       <div className={`${s.numCell} ${s.numDim} ${s.hideNarrow}`}>—</div>
       <div className={`${s.numCell} ${s.numDim} ${s.hideNarrow}`}>—</div>
       <div className={s.dateCell}>{err ? job.error?.slice(0, 40) : 'сейчас'}</div>
-      {err ? (
-        <button className={s.deleteBtn} onClick={() => onDismiss(job.tempId)} title="Убрать" type="button">
-          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden>
-            <path d="M2 2l8 8M10 2l-8 8" strokeLinecap="round" />
-          </svg>
-        </button>
-      ) : (
-        <span />
-      )}
+      <button
+        className={s.deleteBtn}
+        onClick={() => onCancel(job.tempId)}
+        title={err ? 'Убрать' : 'Отменить загрузку'}
+        type="button"
+      >
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden>
+          <path d="M2 2l8 8M10 2l-8 8" strokeLinecap="round" />
+        </svg>
+      </button>
     </div>
   )
 }
@@ -239,13 +240,13 @@ export function ListPage({
   onOpen,
   uploads,
   startUploads,
-  dismissUpload,
+  cancelUpload,
   uploadsDoneTick,
 }: {
   onOpen: (id: string) => void
   uploads: UploadJob[]
   startUploads: (items: UploadRequest[], threshold: number) => void
-  dismissUpload: (tempId: string) => void
+  cancelUpload: (tempId: string) => void
   uploadsDoneTick: number
 }) {
   const [items, setItems] = useState<AnalysisSummary[] | null>(null)
@@ -511,7 +512,7 @@ export function ListPage({
               <span className="microlabel" />
             </div>
             {uploads.map((u) => (
-              <UploadRow key={u.tempId} job={u} onDismiss={dismissUpload} />
+              <UploadRow key={u.tempId} job={u} onCancel={cancelUpload} />
             ))}
             {sorted.map((item) => (
               <Row

@@ -72,6 +72,8 @@ export interface CreateAnalysisOptions {
   /** Порог оталькованности, % (params.talc.talc_ore_thr_pct) */
   talcThresholdPct?: number
   onUploadProgress?: (fraction: number) => void
+  /** Отмена загрузки (abort XHR). */
+  signal?: AbortSignal
 }
 
 /** POST /api/analyses через XHR — ради прогресса загрузки гигапиксельных файлов. */
@@ -90,9 +92,17 @@ function createAnalysis(opts: CreateAnalysisOptions): Promise<CreateAnalysisResp
       fd.append('params', JSON.stringify({ talc: { talc_ore_thr_pct: opts.talcThresholdPct } }))
     }
 
+    if (opts.signal?.aborted) {
+      reject(new ApiError('Загрузка отменена'))
+      return
+    }
     const xhr = new XMLHttpRequest()
     xhr.open('POST', `${API}/analyses`)
     xhr.responseType = 'json'
+    if (opts.signal) {
+      opts.signal.addEventListener('abort', () => xhr.abort(), { once: true })
+      xhr.onabort = () => reject(new ApiError('Загрузка отменена'))
+    }
     if (opts.onUploadProgress) {
       xhr.upload.onprogress = (e) => {
         if (e.lengthComputable) opts.onUploadProgress?.(e.loaded / e.total)

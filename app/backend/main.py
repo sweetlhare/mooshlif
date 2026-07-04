@@ -30,6 +30,19 @@ FRONTEND_DIST = ROOT / "app" / "frontend" / "dist"
 SUPPORTED_EXT = {".jpg", ".jpeg", ".png", ".tif", ".tiff", ".bmp"}
 
 app = FastAPI(title="ШЛИФ-Скан", version="1.0")
+
+
+@app.middleware("http")
+async def _no_cache_html(request, call_next):
+    """SPA-оболочку (index.html) не кэшируем — иначе браузер держит старую
+    версию и не подхватывает новый бандл после деплоя. Хешированные ассеты
+    (/assets/*.js|css) остаются кэшируемыми."""
+    resp = await call_next(request)
+    if resp.headers.get("content-type", "").startswith("text/html"):
+        resp.headers["Cache-Control"] = "no-cache, must-revalidate"
+    return resp
+
+
 _executor: ProcessPoolExecutor | None = None
 
 

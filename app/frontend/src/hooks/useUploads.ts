@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useRef, useState } from 'react'
 import { api, errorMessage } from '../api/client'
 
 export interface UploadJob {
@@ -30,28 +30,39 @@ let counter = 0
 export function useUploads() {
   const [uploads, setUploads] = useState<UploadJob[]>([])
   const [doneTick, setDoneTick] = useState(0)
+  const controllers = useRef(new Map<string, AbortController>())
 
   const startUploads = useCallback((items: UploadRequest[], threshold: number) => {
-    const jobs = items.map((req) => ({
-      req,
-      job: {
-        tempId: `u${(counter += 1)}`,
-        name: req.name,
-        size: req.size,
-        isFile: req.isFile,
-        pct: 0,
-        phase: 'uploading' as const,
-      } satisfies UploadJob,
-    }))
+    const jobs = items.map((req) => {
+      const tempId = `u${(counter += 1)}`
+      controllers.current.set(tempId, new AbortController())
+      return {
+        req,
+        job: {
+          tempId,
+          name: req.name,
+          size: req.size,
+          isFile: req.isFile,
+          pct: 0,
+          phase: 'uploading' as const,
+        } satisfies UploadJob,
+      }
+    })
     setUploads((prev) => [...jobs.map((j) => j.job), ...prev])
 
     void (async () => {
       for (const { req, job } of jobs) {
+        const ctrl = controllers.current.get(job.tempId)
+        if (!ctrl || ctrl.signal.aborted) {
+          controllers.current.delete(job.tempId)
+          continue
+        }
         try {
           await api.createAnalysis({
             file: req.file,
             serverPath: req.serverPath,
             talcThresholdPct: threshold,
+            signal: ctrl.signal,
             onUploadProgress: req.isFile
               ? (fr) =>
                   setUploads((prev) =>
@@ -64,20 +75,28 @@ export function useUploads() {
           setUploads((prev) => prev.filter((u) => u.tempId !== job.tempId))
           setDoneTick((t) => t + 1)
         } catch (e) {
-          setUploads((prev) =>
-            prev.map((u) =>
-              u.tempId === job.tempId ? { ...u, phase: 'error', error: errorMessage(e) } : u,
-            ),
-          )
+          if (ctrl.signal.aborted) {
+            // отменено пользователем — строка уже убрана в cancel()
+          } else {
+            setUploads((prev) =>
+              prev.map((u) =>
+                u.tempId === job.tempId ? { ...u, phase: 'error', error: errorMessage(e) } : u,
+              ),
+            )
+          }
+        } finally {
+          controllers.current.delete(job.tempId)
         }
       }
     })()
   }, [])
 
-  const dismiss = useCallback(
-    (tempId: string) => setUploads((prev) => prev.filter((u) => u.tempId !== tempId)),
-    [],
-  )
+  // Отмена загрузки (или скрытие ошибочной строки): прерываем XHR и убираем строку.
+  const cancel = useCallback((tempId: string) => {
+    controllers.current.get(tempId)?.abort()
+    controllers.current.delete(tempId)
+    setUploads((prev) => prev.filter((u) => u.tempId !== tempId))
+  }, [])
 
-  return { uploads, startUploads, dismiss, doneTick }
+  return { uploads, startUploads, cancel, doneTick }
 }
