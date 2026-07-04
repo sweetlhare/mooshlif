@@ -1,0 +1,15 @@
+services:
+  shlifscan:
+    build: .
+    image: shlifscan:latest
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./runs:/srv/shlifscan/runs          # артефакты анализов
+      - ./models:/srv/shlifscan/models      # веса моделей (обновляемые)
+      - ./data:/srv/shlifscan/data:ro       # демо-набор (опционально)
+    environment:
+      - OMP_NUM_THREADS=4
+    restart: unless-stopped
+
+# GPU-профиль (CUDA): docker compose -f docker-compose.yml -f docker-compose.gpu.yml up
