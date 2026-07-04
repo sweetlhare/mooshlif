@@ -1,0 +1,42 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "shlifscan"
+version = "1.0.0"
+description = "Автоматическая классификация руд по панорамным OM-изображениям полированных шлифов"
+requires-python = ">=3.10"
+dependencies = [
+    "numpy>=1.26",
+    "opencv-python-headless>=4.10",
+    "scikit-image>=0.25",
+    "scikit-learn>=1.5",
+    "scipy>=1.13",
+    "pillow>=10",
+    "pandas>=2.1",
+    "matplotlib>=3.8",
+    "tifffile>=2024.1",
+    "torch>=2.4",
+    "torchvision>=0.19",
+    "joblib>=1.3",
+]
+
+[project.optional-dependencies]
+app = [
+    "fastapi>=0.110",
+    "uvicorn[standard]>=0.29",
+    "python-multipart>=0.0.9",
+    "pyvips>=2.2",
+]
+ml = [
+    "segmentation-models-pytorch>=0.4",
+    "timm>=1.0",
+    "albumentations>=1.4",
+]
+
+[project.scripts]
+shlifscan = "shlifscan.cli:main"
+
+[tool.setuptools]
+packages = ["shlifscan"]

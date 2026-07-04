@@ -1,0 +1,11 @@
+numpy>=1.26
+opencv-python-headless>=4.10
+scikit-image>=0.25
+scikit-learn>=1.7
+scipy>=1.15
+pillow>=10
+pandas>=2.1
+matplotlib>=3.10
+tifffile>=2025.1
+torch>=2.3
+torchvision>=0.18

@@ -1,0 +1,9 @@
+data/
+runs/
+reports/
+.git/
+**/__pycache__/
+**/node_modules/
+app/frontend/dist/
+scratch/
+*.log

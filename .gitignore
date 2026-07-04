@@ -1,0 +1,41 @@
+# данные конкурса — не версионируем (2.8 ГБ)
+data/
+# артефакты
+reports/
+runs/
+*.pt
+*.pth
+*.onnx
+# лёгкие sklearn-модели версионируем, тяжёлые веса — через релизы/архив
+!models/*.pkl
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+.DS_Store
+.venv/
+*.egg-info/
+dist/
+build/
+# кэши признаков и превью
+*.parquet
+scratch/
+# фронтенд: зависимости не версионируем; собранный SPA — версионируем (демо из коробки)
+node_modules/
+!app/frontend/dist/
+!app/frontend/dist/**
+# сабмит-архив и шаблон организаторов (не наш контент)
+*.zip
+scratchpad_tpl.pptx
+scratchpad/
+# временные lock-файлы Office
+~$*
+*.tsbuildinfo
+# презентация и служебные материалы — не в репозитории решения (остаются локально)
+docs/presentation/
+docs/assets/
+docs/org_reference/
+docs/presentation_outline.md
+docs/demo_script.md
+scripts/build_pptx.py
+scripts/build_slides_pdf.py
+scripts/compress_pdf.py
