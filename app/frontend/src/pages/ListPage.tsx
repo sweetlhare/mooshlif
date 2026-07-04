@@ -84,15 +84,7 @@ function Row({
   return (
     <div
       className={`${s.row} ${selected ? s.rowSelected : ''}`}
-      role="button"
-      tabIndex={0}
       onClick={() => onOpen(item.id)}
-      onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault()
-          onOpen(item.id)
-        }
-      }}
     >
       <label className={s.checkCell} onClick={(e) => e.stopPropagation()}>
         <input
@@ -121,10 +113,17 @@ function Row({
         )}
       </div>
 
-      <div className={s.fileCol}>
-        <div className={s.fileName}>{item.file_name}</div>
-        <div className={s.fileId}>№ {item.id}</div>
-      </div>
+      <button
+        className={s.openBtn}
+        onClick={(e) => {
+          e.stopPropagation()
+          onOpen(item.id)
+        }}
+        type="button"
+      >
+        <span className={s.fileName}>{item.file_name}</span>
+        <span className={s.fileId}>№ {item.id}</span>
+      </button>
 
       {live ? (
         <LiveStatus item={item} onFinal={onChanged} />

@@ -193,9 +193,6 @@ export function NewAnalysisModal({
         }}
         onDragLeave={() => setDragOver(false)}
         onDrop={onDrop}
-        role="button"
-        tabIndex={0}
-        onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && inputRef.current?.click()}
       >
         <input
           ref={inputRef}
@@ -233,7 +230,17 @@ export function NewAnalysisModal({
               </div>
             ))}
             <div className={s.dropHint} style={{ paddingTop: 2 }}>
-              + перетащите ещё или выберите файлы
+              + перетащите ещё или{' '}
+              <button
+                type="button"
+                className={s.linkBtn}
+                onClick={(e) => {
+                  e.stopPropagation()
+                  inputRef.current?.click()
+                }}
+              >
+                выберите файлы
+              </button>
             </div>
           </div>
         ) : (
@@ -243,7 +250,17 @@ export function NewAnalysisModal({
               <path d="M5 21.5v3a2 2 0 002 2h18a2 2 0 002-2v-3" strokeLinecap="round" />
             </svg>
             <div className={s.dropTitle}>
-              Перетащите панорамы шлифов или <em>выберите файлы</em>
+              Перетащите панорамы шлифов или{' '}
+              <button
+                type="button"
+                className={s.linkBtn}
+                onClick={(e) => {
+                  e.stopPropagation()
+                  inputRef.current?.click()
+                }}
+              >
+                выберите файлы
+              </button>
             </div>
             <div className={s.dropHint}>
               Можно сразу несколько · TIFF, PNG, JPEG, BMP — вплоть до гигапикселя

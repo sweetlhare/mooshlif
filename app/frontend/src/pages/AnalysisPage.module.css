@@ -559,6 +559,17 @@
   overflow-wrap: break-word;
 }
 
+.actionError {
+  margin: 8px 18px 0;
+  padding: 8px 13px;
+  border: 1px solid rgba(240, 86, 79, 0.35);
+  background: rgba(240, 86, 79, 0.08);
+  border-radius: var(--radius-sm);
+  color: var(--err);
+  font-size: 12.5px;
+  line-height: 1.45;
+}
+
 .confImgWrap {
   display: flex;
   flex-direction: column;

@@ -402,27 +402,39 @@ export function AnalysisPage({
   const [flagOpen, setFlagOpen] = useState(false)
   const [reason, setReason] = useState('wrong_class')
   const [note, setNote] = useState('')
+  const [pendingDelete, setPendingDelete] = useState(false)
+  const [deleting, setDeleting] = useState(false)
+  const [actionError, setActionError] = useState<string | null>(null)
 
   useEffect(() => {
-    api.getFeedback(id).then((fb) => setFlagged(fb.flagged)).catch(() => {})
+    let cancelled = false
+    api
+      .getFeedback(id)
+      .then((fb) => !cancelled && setFlagged(fb.flagged))
+      .catch(() => undefined) // при сбое не трогаем флаг (не форсим false)
+    return () => {
+      cancelled = true
+    }
   }, [id])
 
   const submitFlag = async () => {
+    setActionError(null)
     try {
       await api.flag(id, reason, note)
       setFlagged(true)
       setFlagOpen(false)
       setNote('')
     } catch (e) {
-      window.alert(errorMessage(e))
+      setActionError(errorMessage(e))
     }
   }
   const removeFlag = async () => {
+    setActionError(null)
     try {
       await api.unflag(id)
       setFlagged(false)
     } catch (e) {
-      window.alert(errorMessage(e))
+      setActionError(errorMessage(e))
     }
   }
 
@@ -449,13 +461,20 @@ export function AnalysisPage({
     return () => window.clearInterval(t)
   }, [active, load])
 
-  const del = async () => {
-    if (!window.confirm('Удалить анализ вместе с результатами?')) return
+  const del = () => {
+    setActionError(null)
+    setPendingDelete(true)
+  }
+  const confirmDelete = async () => {
+    setDeleting(true)
+    setActionError(null)
     try {
       await api.deleteAnalysis(id)
       onBack()
     } catch (e) {
-      window.alert(errorMessage(e))
+      setActionError(errorMessage(e))
+      setDeleting(false)
+      setPendingDelete(false)
     }
   }
 
@@ -520,10 +539,17 @@ export function AnalysisPage({
         </button>
       </div>
 
+      {actionError && <div className={s.actionError}>{actionError}</div>}
+
       {flagOpen && !flagged && (
         <div className={s.flagForm}>
-          <span className={s.flagFormLabel}>Причина:</span>
-          <select className={s.flagSelect} value={reason} onChange={(e) => setReason(e.target.value)}>
+          <span className={s.flagFormLabel} id={`flag-reason-${id}`}>Причина:</span>
+          <select
+            className={s.flagSelect}
+            value={reason}
+            onChange={(e) => setReason(e.target.value)}
+            aria-labelledby={`flag-reason-${id}`}
+          >
             <option value="wrong_class">Неверный класс руды</option>
             <option value="bad_talc">Ошибка по тальку</option>
             <option value="bad_segmentation">Плохая сегментация фаз</option>
@@ -534,6 +560,7 @@ export function AnalysisPage({
             className={s.flagNote}
             type="text"
             placeholder="Комментарий (необязательно)"
+            aria-label="Комментарий к доработке"
             value={note}
             onChange={(e) => setNote(e.target.value)}
           />
@@ -628,6 +655,34 @@ export function AnalysisPage({
             <div className={s.confHint}>
               Тёплые области — низкая уверенность сегментации талька; рабочий масштаб ≤ 2048 px.
             </div>
+          </div>
+        </Modal>
+      )}
+
+      {pendingDelete && (
+        <Modal
+          title="Удалить анализ?"
+          width={420}
+          onClose={deleting ? () => undefined : () => setPendingDelete(false)}
+        >
+          <p style={{ font: '400 13.5px/1.6 var(--font-ui)', color: 'var(--text-1)', margin: 0 }}>
+            Удалить анализ вместе с результатами? Действие необратимо — снимок, маски и
+            отчёты будут удалены.
+          </p>
+          {actionError && <div className={s.actionError} style={{ margin: '12px 0 0' }}>{actionError}</div>}
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, marginTop: 22 }}>
+            <button className="btn btn-ghost" onClick={() => setPendingDelete(false)} disabled={deleting} type="button">
+              Отмена
+            </button>
+            <button className="btn btn-danger" onClick={() => void confirmDelete()} disabled={deleting} type="button">
+              {deleting ? (
+                <>
+                  <Spinner size={13} /> удаление…
+                </>
+              ) : (
+                'Удалить'
+              )}
+            </button>
           </div>
         </Modal>
       )}

@@ -20,6 +20,10 @@ export function AnnotatePage({ id, onBack }: { id: string; onBack: () => void })
   const last = useRef<Pt | null>(null)
   const poly = useRef<Pt[]>([])
   const toolRef = useRef<Tool>('brush')
+  // Всегда актуальные обработчики полигона — чтобы keydown-эффект ([] deps) не
+  // ловил замыкание первого рендера (иначе Enter-замыкание красит фоллбэком).
+  const closePolyRef = useRef<() => void>(() => undefined)
+  const cancelPolyRef = useRef<() => void>(() => undefined)
 
   const [phases, setPhases] = useState<AnnotationPhase[]>([])
   const [phase, setPhase] = useState<string>('talc')
@@ -154,9 +158,9 @@ export function AnnotatePage({ id, onBack }: { id: string; onBack: () => void })
         setGrabbing(true)
         e.preventDefault()
       } else if (e.code === 'Escape') {
-        cancelPoly()
+        cancelPolyRef.current()
       } else if (e.code === 'Enter' && toolRef.current === 'polygon') {
-        closePoly()
+        closePolyRef.current()
       }
     }
     const up = (e: KeyboardEvent) => {
@@ -249,6 +253,8 @@ export function AnnotatePage({ id, onBack }: { id: string; onBack: () => void })
     setPolyLen(0)
     redrawPreview()
   }
+  closePolyRef.current = closePoly
+  cancelPolyRef.current = cancelPoly
 
   // ---- pointer ----
   const onDown = (e: React.PointerEvent) => {
@@ -372,6 +378,7 @@ export function AnnotatePage({ id, onBack }: { id: string; onBack: () => void })
               key={p.key}
               type="button"
               className={`${s.swatch} ${phase === p.key ? s.swatchOn : ''}`}
+              aria-pressed={phase === p.key}
               onClick={() => {
                 setPhase(p.key)
                 if (tool === 'erase') setToolBoth('brush')
@@ -384,14 +391,14 @@ export function AnnotatePage({ id, onBack }: { id: string; onBack: () => void })
           ))}
         </div>
         <div className={s.tools}>
-          <button className={`${s.toolBtn} ${tool === 'brush' ? s.toolOn : ''}`} onClick={() => setToolBoth('brush')} type="button" title="Кисть">✎ Кисть</button>
-          <button className={`${s.toolBtn} ${tool === 'polygon' ? s.toolOn : ''}`} onClick={() => setToolBoth('polygon')} type="button" title="Полигон: клики по вершинам, двойной клик или клик по первой точке — замкнуть">⬡ Полигон</button>
-          <button className={`${s.toolBtn} ${tool === 'erase' ? s.toolOn : ''}`} onClick={() => setToolBoth('erase')} type="button" title="Ластик"><span className={s.eraseDot} /> Ластик</button>
+          <button className={`${s.toolBtn} ${tool === 'brush' ? s.toolOn : ''}`} aria-pressed={tool === 'brush'} onClick={() => setToolBoth('brush')} type="button" title="Кисть">✎ Кисть</button>
+          <button className={`${s.toolBtn} ${tool === 'polygon' ? s.toolOn : ''}`} aria-pressed={tool === 'polygon'} onClick={() => setToolBoth('polygon')} type="button" title="Полигон: клики по вершинам, двойной клик или клик по первой точке — замкнуть">⬡ Полигон</button>
+          <button className={`${s.toolBtn} ${tool === 'erase' ? s.toolOn : ''}`} aria-pressed={tool === 'erase'} onClick={() => setToolBoth('erase')} type="button" title="Ластик"><span className={s.eraseDot} /> Ластик</button>
         </div>
         {tool !== 'polygon' && (
           <div className={s.brushCtl}>
             <span className={s.brushLbl}>кисть</span>
-            <input type="range" min={4} max={140} value={brush} onChange={(e) => setBrush(Number(e.target.value))} />
+            <input type="range" min={4} max={140} value={brush} aria-label="Размер кисти" onChange={(e) => setBrush(Number(e.target.value))} />
             <span className="num" style={{ width: 34 }}>{brush}px</span>
           </div>
         )}
