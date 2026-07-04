@@ -1,0 +1,193 @@
+.dropzone {
+  border: 1.5px dashed var(--line-strong);
+  border-radius: var(--radius);
+  padding: 26px 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  text-align: center;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
+  background: var(--bg-2);
+}
+.dropzone:hover {
+  border-color: rgba(227, 166, 59, 0.5);
+}
+.dropzoneActive {
+  border-color: var(--accent);
+  background: var(--accent-dim);
+}
+.dropzoneSelected {
+  border-style: solid;
+  border-color: rgba(62, 208, 127, 0.55);
+  background: rgba(62, 208, 127, 0.06);
+}
+
+.dropIcon {
+  color: var(--text-2);
+}
+.dropzoneActive .dropIcon,
+.dropzone:hover .dropIcon {
+  color: var(--accent);
+}
+
+.dropTitle {
+  font: 500 13.5px/1.4 var(--font-ui);
+  color: var(--text-0);
+}
+.dropTitle em {
+  font-style: normal;
+  color: var(--accent);
+}
+.dropHint {
+  font: 400 11.5px/1.4 var(--font-ui);
+  color: var(--text-2);
+}
+
+.selectedFile {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font: 500 12.5px/1.3 var(--font-mono);
+  color: var(--ok);
+  max-width: 100%;
+}
+.selectedName {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.clearFile {
+  border: none;
+  background: none;
+  color: var(--text-2);
+  cursor: pointer;
+  padding: 3px;
+  border-radius: 5px;
+  display: flex;
+}
+.clearFile:hover {
+  color: var(--err);
+  background: rgba(240, 86, 79, 0.12);
+}
+
+.divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 18px 0 12px;
+}
+.divider::before,
+.divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--line);
+}
+
+.demoList {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  max-height: 190px;
+  overflow-y: auto;
+}
+
+.demoItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 13px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--bg-2);
+  cursor: pointer;
+  text-align: left;
+  transition: border-color 0.13s ease, background 0.13s ease;
+  width: 100%;
+}
+.demoItem:hover {
+  border-color: rgba(227, 166, 59, 0.45);
+}
+.demoItemActive {
+  border-color: var(--accent);
+  background: var(--accent-dim);
+}
+
+.demoName {
+  font: 500 13px/1.3 var(--font-ui);
+  color: var(--text-0);
+}
+.demoSize {
+  font: 400 11px/1.3 var(--font-mono);
+  color: var(--text-2);
+  white-space: nowrap;
+}
+
+.paramRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-top: 20px;
+  padding: 13px 15px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--bg-2);
+}
+.paramLabel {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.paramTitle {
+  font: 500 13px/1.3 var(--font-ui);
+  color: var(--text-0);
+}
+.paramHint {
+  font: 400 11px/1.4 var(--font-ui);
+  color: var(--text-2);
+}
+.paramInputWrap {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+.paramInputWrap input {
+  width: 76px;
+  text-align: right;
+}
+.paramUnit {
+  font: 500 13px/1 var(--font-mono);
+  color: var(--text-2);
+}
+
+.footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 22px;
+}
+
+.uploadState {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  font: 400 11.5px/1.3 var(--font-mono);
+  color: var(--text-1);
+}
+
+.error {
+  margin-top: 14px;
+  padding: 10px 13px;
+  border: 1px solid rgba(240, 86, 79, 0.35);
+  background: rgba(240, 86, 79, 0.08);
+  border-radius: var(--radius-sm);
+  color: var(--err);
+  font-size: 12.5px;
+  line-height: 1.5;
+}

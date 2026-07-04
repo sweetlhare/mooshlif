@@ -1,0 +1,349 @@
+import { useCallback, useEffect, useMemo, useState, type CSSProperties } from 'react'
+import { api, errorMessage, urls } from '../api/client'
+import type { AnalysisStatus, AnalysisSummary } from '../api/types'
+import { useProgress } from '../hooks/useProgress'
+import {
+  fmtDateTime,
+  fmtElapsed,
+  fmtPct,
+  oreClassColor,
+  STATUS_COLOR,
+  STATUS_LABEL,
+} from '../lib/format'
+import { Led, ProgressBar, Skeleton } from '../components/ui'
+import { NewAnalysisModal } from '../components/NewAnalysisModal'
+import s from './ListPage.module.css'
+
+const ACTIVE: AnalysisStatus[] = ['queued', 'running']
+
+/* ---------- Живой прогресс строки (SSE) ---------- */
+
+function LiveStatus({
+  item,
+  onFinal,
+}: {
+  item: AnalysisSummary
+  onFinal: () => void
+}) {
+  const progress = useProgress(item.id, onFinal)
+  const pct = progress?.percent ?? 0
+  const stage =
+    progress?.stage ?? (item.status === 'queued' ? 'ожидание очереди' : 'подготовка…')
+
+  return (
+    <div className={s.statusCell}>
+      <span className={s.statusLine} style={{ color: STATUS_COLOR[item.status] }}>
+        <Led color={STATUS_COLOR[item.status]} pulse />
+        {STATUS_LABEL[item.status]}
+        <span className="num" style={{ color: 'var(--text-1)' }}>
+          {Math.round(pct)}%
+        </span>
+      </span>
+      <ProgressBar percent={pct} indeterminate={item.status === 'queued' && pct === 0} />
+      <span className={s.stage}>{stage}</span>
+    </div>
+  )
+}
+
+function StaticStatus({ status }: { status: AnalysisStatus }) {
+  return (
+    <div className={s.statusCell}>
+      <span className={s.statusLine} style={{ color: STATUS_COLOR[status] }}>
+        <Led color={STATUS_COLOR[status]} />
+        {STATUS_LABEL[status]}
+      </span>
+    </div>
+  )
+}
+
+/* ---------- Строка журнала ---------- */
+
+function Row({
+  item,
+  onOpen,
+  onChanged,
+}: {
+  item: AnalysisSummary
+  onOpen: (id: string) => void
+  onChanged: () => void
+}) {
+  const [confirming, setConfirming] = useState(false)
+  const [thumbFailed, setThumbFailed] = useState(false)
+  const active = ACTIVE.includes(item.status)
+
+  const del = async (e: React.MouseEvent) => {
+    e.stopPropagation()
+    if (!confirming) {
+      setConfirming(true)
+      window.setTimeout(() => setConfirming(false), 3500)
+      return
+    }
+    try {
+      await api.deleteAnalysis(item.id)
+    } catch {
+      /* строка исчезнет/останется после перезагрузки списка */
+    }
+    onChanged()
+  }
+
+  return (
+    <div
+      className={s.row}
+      role="button"
+      tabIndex={0}
+      onClick={() => onOpen(item.id)}
+      onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && onOpen(item.id)}
+    >
+      <div className={s.thumbWrap}>
+        {thumbFailed || item.status === 'queued' ? (
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" aria-hidden>
+            <circle cx="12" cy="12" r="7.5" />
+            <path d="M12 1.5v4M12 18.5v4M1.5 12h4M18.5 12h4" strokeLinecap="round" />
+          </svg>
+        ) : (
+          <img
+            className={s.thumb}
+            src={urls.preview(item.id)}
+            alt=""
+            loading="lazy"
+            onError={() => setThumbFailed(true)}
+          />
+        )}
+      </div>
+
+      <div>
+        <div className={s.fileName}>{item.file_name}</div>
+        <div className={s.fileId}>№ {item.id}</div>
+      </div>
+
+      {active ? (
+        <LiveStatus item={item} onFinal={onChanged} />
+      ) : (
+        <StaticStatus status={item.status} />
+      )}
+
+      <div>
+        {item.ore_class ? (
+          <span
+            className={s.classBadge}
+            style={{ '--badge-color': oreClassColor(item.ore_class) } as CSSProperties}
+          >
+            {item.ore_class}
+          </span>
+        ) : (
+          <span className={s.numDim}>—</span>
+        )}
+      </div>
+
+      <div className={`${s.numCell} ${item.talc_pct == null ? s.numDim : ''}`}>
+        {fmtPct(item.talc_pct)}
+      </div>
+      <div className={`${s.numCell} ${item.sulfide_total_pct == null ? s.numDim : ''} ${s.hideNarrow}`}>
+        {fmtPct(item.sulfide_total_pct)}
+      </div>
+      <div className={`${s.numCell} ${s.numDim} ${s.hideNarrow}`}>{fmtElapsed(item.elapsed_s)}</div>
+      <div className={s.dateCell}>{fmtDateTime(item.created_at)}</div>
+
+      <button
+        className={`${s.deleteBtn} ${confirming ? s.deleteConfirm : ''}`}
+        onClick={(e) => void del(e)}
+        onBlur={() => setConfirming(false)}
+        title="Удалить анализ"
+        type="button"
+      >
+        {confirming ? (
+          'Точно?'
+        ) : (
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.4" aria-hidden>
+            <path d="M2.5 4h11M6.5 4V2.5h3V4M4 4l.8 9.5h6.4L12 4M6.5 7v4M9.5 7v4" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        )}
+      </button>
+    </div>
+  )
+}
+
+/* ---------- Страница ---------- */
+
+export function ListPage({ onOpen }: { onOpen: (id: string) => void }) {
+  const [items, setItems] = useState<AnalysisSummary[] | null>(null)
+  const [loadError, setLoadError] = useState<string | null>(null)
+  const [modalOpen, setModalOpen] = useState(false)
+
+  const load = useCallback(async () => {
+    try {
+      const list = await api.listAnalyses()
+      setItems(list)
+      setLoadError(null)
+    } catch (e) {
+      setLoadError(errorMessage(e))
+    }
+  }, [])
+
+  useEffect(() => {
+    void load()
+  }, [load])
+
+  const hasActive = useMemo(
+    () => items?.some((a) => ACTIVE.includes(a.status)) ?? false,
+    [items],
+  )
+
+  // Резервный опрос, пока есть активные анализы (SSE — основной канал).
+  useEffect(() => {
+    if (!hasActive) return
+    const t = window.setInterval(() => void load(), 4000)
+    return () => window.clearInterval(t)
+  }, [hasActive, load])
+
+  const doneCount = items?.filter((a) => a.status === 'done').length ?? 0
+
+  const sorted = useMemo(
+    () =>
+      items
+        ? [...items].sort(
+            (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+          )
+        : null,
+    [items],
+  )
+
+  return (
+    <main className={s.page}>
+      <div className={s.pageHead}>
+        <div className={s.titleBlock}>
+          <h1 className={s.title}>Журнал анализов</h1>
+          <div className={s.subtitle}>
+            {items ? (
+              <>
+                всего <b>{items.length}</b> · завершено <b>{doneCount}</b>
+                {hasActive && (
+                  <>
+                    {' '}
+                    · в работе <b>{items.filter((a) => ACTIVE.includes(a.status)).length}</b>
+                  </>
+                )}
+              </>
+            ) : (
+              'загрузка…'
+            )}
+          </div>
+        </div>
+        <div className={s.actions}>
+          {doneCount > 0 && (
+            <a className="btn" href={urls.batchCsv} download>
+              <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden>
+                <path d="M8 2v8m0 0L5 7m3 3l3-3M2.5 12.5v1a1 1 0 001 1h9a1 1 0 001-1v-1" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+              Сводный CSV
+            </a>
+          )}
+          <button className="btn btn-primary" onClick={() => setModalOpen(true)} type="button">
+            <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden>
+              <path d="M8 2.5v11M2.5 8h11" strokeLinecap="round" />
+            </svg>
+            Новый анализ
+          </button>
+        </div>
+      </div>
+
+      {loadError && items && (
+        <div className={s.offlineBanner}>
+          <Led color="var(--err)" pulse />
+          Нет связи с сервером — данные могли устареть. {loadError}
+        </div>
+      )}
+
+      <div className={s.log}>
+        {sorted === null && loadError === null && (
+          <>
+            {[0, 1, 2, 3].map((i) => (
+              <div key={i} className={s.skeletonRow}>
+                <Skeleton width={74} height={48} />
+                <Skeleton height={14} style={{ maxWidth: 220 }} />
+                <Skeleton height={12} style={{ maxWidth: 90 }} />
+                <Skeleton height={22} style={{ maxWidth: 130, borderRadius: 999 }} />
+                <Skeleton height={12} />
+                <Skeleton height={12} />
+                <Skeleton height={12} />
+                <Skeleton height={12} />
+                <span />
+              </div>
+            ))}
+          </>
+        )}
+
+        {sorted === null && loadError !== null && (
+          <div className={s.dead}>
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--err)" strokeWidth="1.2" aria-hidden>
+              <circle cx="12" cy="12" r="9" />
+              <path d="M8.5 9.5l7 7M15.5 9.5l-7 7" strokeLinecap="round" opacity="0.7" />
+            </svg>
+            <div className={s.deadTitle}>Сервер недоступен</div>
+            <div className={s.deadText}>
+              Не удалось получить список анализов. Убедитесь, что бэкенд запущен
+              (по умолчанию — http://localhost:8000), и повторите попытку.
+            </div>
+            <button className="btn" onClick={() => void load()} type="button">
+              Повторить
+            </button>
+          </div>
+        )}
+
+        {sorted !== null && sorted.length === 0 && (
+          <div className={s.empty}>
+            <svg className={s.emptyIcon} width="56" height="56" viewBox="0 0 48 48" fill="none" stroke="currentColor" strokeWidth="1.2" aria-hidden>
+              <circle cx="24" cy="24" r="15" strokeDasharray="4 4" />
+              <circle cx="24" cy="24" r="8" />
+              <path d="M24 2v7M24 39v7M2 24h7M39 24h7" strokeLinecap="round" />
+              <circle cx="24" cy="24" r="1.8" fill="currentColor" stroke="none" />
+            </svg>
+            <div className={s.emptyTitle}>Ни одного анализа</div>
+            <div className={s.emptyText}>
+              Загрузите панорамное изображение полированного шлифа — система выполнит
+              сегментацию фаз, оценит оталькованность и определит класс руды.
+            </div>
+            <button className="btn btn-primary" onClick={() => setModalOpen(true)} type="button">
+              Загрузить первый снимок
+            </button>
+          </div>
+        )}
+
+        {sorted !== null && sorted.length > 0 && (
+          <>
+            <div className={s.logHead}>
+              <span className="microlabel" />
+              <span className="microlabel">Файл</span>
+              <span className="microlabel">Статус</span>
+              <span className="microlabel">Класс руды</span>
+              <span className="microlabel" style={{ textAlign: 'right' }}>
+                Тальк
+              </span>
+              <span className={`microlabel ${s.hideNarrow}`} style={{ textAlign: 'right' }}>
+                Сульфиды
+              </span>
+              <span className={`microlabel ${s.hideNarrow}`} style={{ textAlign: 'right' }}>
+                Время
+              </span>
+              <span className="microlabel">Создан</span>
+              <span className="microlabel" />
+            </div>
+            {sorted.map((item) => (
+              <Row key={item.id} item={item} onOpen={onOpen} onChanged={() => void load()} />
+            ))}
+          </>
+        )}
+      </div>
+
+      {modalOpen && (
+        <NewAnalysisModal
+          onClose={() => setModalOpen(false)}
+          onCreated={() => {
+            setModalOpen(false)
+            void load()
+          }}
+        />
+      )}
+    </main>
+  )
+}

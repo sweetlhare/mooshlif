@@ -1,0 +1,120 @@
+.header {
+  height: 58px;
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 0 22px;
+  border-bottom: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.82);
+  backdrop-filter: blur(10px);
+  position: sticky;
+  top: 0;
+  z-index: 50;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: none;
+  border: none;
+  padding: 4px 6px;
+  margin-left: -6px;
+  cursor: pointer;
+  border-radius: 8px;
+}
+.brand:hover .mark {
+  transform: rotate(90deg);
+}
+
+.mark {
+  color: var(--accent);
+  display: block;
+  transition: transform 0.5s cubic-bezier(0.2, 0.9, 0.3, 1.2);
+}
+
+.wordmarkWrap {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 3px;
+}
+
+.wordmark {
+  font: 600 15px/1 var(--font-display);
+  letter-spacing: 0.09em;
+  color: var(--text-0);
+  white-space: nowrap;
+}
+.wordmark em {
+  font-style: normal;
+  color: var(--accent);
+}
+
+.tagline {
+  font: 500 9.5px/1 var(--font-ui);
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--text-2);
+  white-space: nowrap;
+}
+
+.nav {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-right: auto;
+  margin-left: 22px;
+}
+.navLink {
+  height: 32px;
+  padding: 0 13px;
+  border: none;
+  background: transparent;
+  border-radius: var(--radius-sm);
+  color: var(--text-1);
+  font: 500 13px/1 var(--font-ui);
+  cursor: pointer;
+  transition: background 0.13s ease, color 0.13s ease;
+}
+.navLink:hover {
+  background: var(--bg-2);
+  color: var(--text-0);
+}
+.navActive {
+  background: var(--accent-dim);
+  color: var(--accent);
+}
+
+.health {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 32px;
+  padding: 0 13px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--bg-1);
+  font: 500 11px/1 var(--font-mono);
+  color: var(--text-1);
+  white-space: nowrap;
+}
+
+.healthSep {
+  width: 1px;
+  height: 12px;
+  background: var(--line-strong);
+}
+
+.healthDevice {
+  color: var(--text-0);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.healthOffline {
+  color: var(--err);
+  letter-spacing: 0.06em;
+}

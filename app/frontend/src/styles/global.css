@@ -1,0 +1,266 @@
+/* ============================================================
+   ШЛИФ-Скан — глобальные токены и базовые стили
+   Эстетика: прецизионный лабораторный прибор. Графит + пиритовая латунь.
+   ============================================================ */
+
+:root {
+  /* Светлая тема — «прецизионный лабораторный прибор при дневном свете» */
+  --bg-0: #eef1f6;   /* фон страницы */
+  --bg-1: #ffffff;   /* карточки, поля, приподнятые поверхности */
+  --bg-2: #f4f7fb;   /* вторичные поверхности */
+  --bg-3: #e6ecf4;   /* ховер / третичный */
+  --line: rgba(30, 42, 66, 0.10);
+  --line-strong: rgba(30, 42, 66, 0.20);
+
+  --text-0: #16202e;
+  --text-1: #47566c;
+  --text-2: #7a879b;
+
+  --accent: #b06d12;
+  --accent-bright: #cf8a24;
+  --accent-dim: rgba(176, 109, 18, 0.12);
+  --accent-ink: #ffffff;
+
+  /* Цвета фаз — фиксированы контрактом маски (подобраны под светлый фон) */
+  --phase-ordinary: #12995a; /* зелёный — обычные срастания */
+  --phase-fine: #dc3a32;     /* красный — тонкие срастания */
+  --phase-talc: #2f6fd6;     /* синий — тальк */
+  --phase-gray: #6a7484;
+
+  --ok: #12995a;
+  --err: #d63a32;
+  --run: #2f6fd6;
+  --queue: #7a879b;
+
+  --font-ui: 'IBM Plex Sans', 'Segoe UI', system-ui, sans-serif;
+  --font-display: 'Unbounded', 'IBM Plex Sans', sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Consolas, monospace;
+
+  /* фон окна просмотра снимка (нейтральный светло-серый под цветные шлифы) */
+  --viewer-bg: #dbe1ea;
+
+  --radius: 10px;
+  --radius-sm: 7px;
+  --shadow-1: 0 6px 20px rgba(30, 42, 66, 0.10);
+  --shadow-2: 0 18px 48px rgba(30, 42, 66, 0.16);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  font: 400 14px/1.5 var(--font-ui);
+  color: var(--text-0);
+  background:
+    radial-gradient(1100px 700px at 78% -12%, rgba(176, 109, 18, 0.06), transparent 62%),
+    radial-gradient(900px 700px at -10% 110%, rgba(47, 111, 214, 0.05), transparent 60%),
+    var(--bg-0);
+  background-attachment: fixed;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* Тонкая сетка прибора поверх фона */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(rgba(30, 42, 66, 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(30, 42, 66, 0.035) 1px, transparent 1px);
+  background-size: 44px 44px;
+  z-index: 0;
+}
+
+#root {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+::selection {
+  background: rgba(176, 109, 18, 0.22);
+  color: var(--text-0);
+}
+
+h1, h2, h3, h4, p {
+  margin: 0;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+}
+
+a {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+input[type='number'],
+input[type='text'] {
+  font: 500 13px/1 var(--font-mono);
+  color: var(--text-0);
+  background: var(--bg-1);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-sm);
+  padding: 9px 11px;
+  outline: none;
+  transition: border-color 0.15s ease;
+}
+
+input[type='number']:focus,
+input[type='text']:focus {
+  border-color: var(--accent);
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* --- Скроллбары --- */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #c2ccda transparent;
+}
+*::-webkit-scrollbar {
+  width: 9px;
+  height: 9px;
+}
+*::-webkit-scrollbar-thumb {
+  background: #c2ccda;
+  border-radius: 5px;
+  border: 2px solid var(--bg-0);
+}
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* ============ Утилитарные классы ============ */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 36px;
+  padding: 0 15px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--line-strong);
+  background: var(--bg-2);
+  color: var(--text-0);
+  font: 500 13px/1 var(--font-ui);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s ease, border-color 0.15s ease, transform 0.1s ease;
+  user-select: none;
+}
+.btn:hover:not(:disabled) {
+  background: var(--bg-3);
+  border-color: rgba(151, 168, 194, 0.35);
+}
+.btn:active:not(:disabled) {
+  transform: translateY(1px);
+}
+.btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.btn svg {
+  flex: none;
+}
+
+.btn-primary {
+  background: var(--accent);
+  border-color: transparent;
+  color: var(--accent-ink);
+  font-weight: 600;
+  box-shadow: 0 2px 14px rgba(227, 166, 59, 0.25);
+}
+.btn-primary:hover:not(:disabled) {
+  background: var(--accent-bright);
+  border-color: transparent;
+}
+
+.btn-ghost {
+  background: transparent;
+  border-color: transparent;
+  color: var(--text-1);
+}
+.btn-ghost:hover:not(:disabled) {
+  background: var(--bg-2);
+  color: var(--text-0);
+}
+
+.btn-danger:hover:not(:disabled) {
+  border-color: var(--err);
+  color: var(--err);
+}
+
+.microlabel {
+  font: 600 10px/1.3 var(--font-ui);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-2);
+}
+
+.num {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ============ OpenSeadragon: навигатор под тему ============ */
+.osd-root .navigator {
+  border: 1px solid var(--line-strong) !important;
+  border-radius: 8px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.9) !important;
+  box-shadow: var(--shadow-1);
+  margin: 14px !important;
+}
+.osd-root .displayregion {
+  border: 2px solid var(--accent) !important;
+}
+
+/* ============ Анимации ============ */
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulseDot {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.35; }
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes shimmer {
+  from { background-position: 200% 0; }
+  to { background-position: -200% 0; }
+}
+
+.fade-up {
+  animation: fadeUp 0.35s ease both;
+}
