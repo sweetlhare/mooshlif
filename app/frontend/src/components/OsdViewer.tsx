@@ -56,6 +56,17 @@ export function OsdViewer({
       const L = layersRef.current
       const image = world.getItemAt(0)
       const phases = world.getItemAt(1)
+      // Жёстко совмещаем слой маски с базовым: одинаковые bounds, даже если
+      // пиксельные размеры пирамид различаются (маска — в рабочем масштабе,
+      // вдвое меньше исходника). Без этого OSD может показать маску со сдвигом.
+      if (image && phases) {
+        const b = image.getBounds()
+        const pb = phases.getBounds()
+        if (pb.x !== b.x || pb.y !== b.y || Math.abs(pb.width - b.width) > 1e-9) {
+          phases.setPosition(new OpenSeadragon.Point(b.x, b.y), true)
+          phases.setWidth(b.width, true)
+        }
+      }
       if (image) image.setOpacity(L.imageVisible ? 1 : 0)
       if (phases) phases.setOpacity(L.phasesVisible ? L.phasesOpacity : 0)
     }
