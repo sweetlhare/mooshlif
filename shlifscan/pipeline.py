@@ -178,12 +178,17 @@ def analyze_image(path: str | Path, cfg: Optional[PipelineConfig] = None,
                 ox1 = min(int(round((t.core_x + t.core_w) * scale)), out_w)
                 oy1 = min(int(round((t.core_y + t.core_h) * scale)), out_h)
                 cx0 = int(round((t.core_x - t.x) * sx)); cy0 = int(round((t.core_y - t.y) * sx))
+                # конец ядра в координатах проанализированного тайла — берём РОВНО
+                # ядро (без правого/нижнего перекрытия), иначе контент сжимается
+                # и маска уезжает вверх-влево относительно исходника
+                cx1 = int(round((t.core_x - t.x + t.core_w) * sx))
+                cy1 = int(round((t.core_y - t.y + t.core_h) * sx))
                 cw, ch = ox1 - ox0, oy1 - oy0
                 if cw <= 0 or ch <= 0:
                     continue
 
                 def fit(arr, interp):
-                    return cv2.resize(arr[cy0:, cx0:], (cw, ch), interpolation=interp)
+                    return cv2.resize(arr[cy0:cy1, cx0:cx1], (cw, ch), interpolation=interp)
 
                 phase_map[oy0:oy1, ox0:ox1] = fit(pm, cv2.INTER_NEAREST)
                 conf[oy0:oy1, ox0:ox1] = fit(cf, cv2.INTER_LINEAR)
