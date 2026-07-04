@@ -1,21 +1,13 @@
 import { useEffect, useRef, useState, type DragEvent } from 'react'
-import { api, errorMessage } from '../api/client'
+import { api } from '../api/client'
 import type { DemoImage } from '../api/types'
+import type { UploadRequest } from '../hooks/useUploads'
 import { fmtNum } from '../lib/format'
-import { Modal, ProgressBar, Skeleton, Spinner } from './ui'
+import { Modal, Skeleton } from './ui'
 import s from './NewAnalysisModal.module.css'
 
 const ACCEPT_EXT = ['.tif', '.tiff', '.png', '.jpg', '.jpeg', '.bmp']
 const DEFAULT_THRESHOLD = '10'
-
-type UploadState = 'wait' | 'up' | 'done' | 'err'
-interface UploadItem {
-  key: string
-  name: string
-  isFile: boolean
-  pct: number
-  state: UploadState
-}
 
 function isAcceptedFile(f: File): boolean {
   const name = f.name.toLowerCase()
@@ -30,10 +22,10 @@ function fmtBytes(n: number): string {
 
 export function NewAnalysisModal({
   onClose,
-  onCreated,
+  onSubmit,
 }: {
   onClose: () => void
-  onCreated: (id: string) => void
+  onSubmit: (items: UploadRequest[], threshold: number) => void
 }) {
   const [files, setFiles] = useState<File[]>([])
   const [selectedDemos, setSelectedDemos] = useState<DemoImage[]>([])
@@ -41,8 +33,6 @@ export function NewAnalysisModal({
   const [demosError, setDemosError] = useState(false)
   const [threshold, setThreshold] = useState(DEFAULT_THRESHOLD)
   const [dragOver, setDragOver] = useState(false)
-  const [busy, setBusy] = useState(false)
-  const [progress, setProgress] = useState<UploadItem[] | null>(null)
   const [error, setError] = useState<string | null>(null)
   const inputRef = useRef<HTMLInputElement>(null)
 
@@ -99,86 +89,20 @@ export function NewAnalysisModal({
   })()
 
   const total = files.length + selectedDemos.length
-  const canSubmit = total > 0 && parsedThreshold !== null && !busy
+  const canSubmit = total > 0 && parsedThreshold !== null
 
-  const submit = async () => {
+  const submit = () => {
     if (!canSubmit || parsedThreshold === null) return
-    setBusy(true)
-    setError(null)
-    const jobs = [
-      ...files.map((f, i) => ({ key: `f${i}`, file: f as File | undefined, serverPath: undefined as string | undefined, name: f.name, isFile: true })),
-      ...selectedDemos.map((d, i) => ({ key: `d${i}`, file: undefined as File | undefined, serverPath: d.server_path, name: d.name, isFile: false })),
+    const items: UploadRequest[] = [
+      ...files.map((f) => ({ file: f, name: f.name, size: f.size, isFile: true })),
+      ...selectedDemos.map((d) => ({ serverPath: d.server_path, name: d.name, size: 0, isFile: false })),
     ]
-    setProgress(jobs.map((j) => ({ key: j.key, name: j.name, isFile: j.isFile, pct: 0, state: 'wait' as UploadState })))
-    const patch = (key: string, upd: Partial<UploadItem>) =>
-      setProgress((prev) => prev?.map((it) => (it.key === key ? { ...it, ...upd } : it)) ?? prev)
-
-    let firstId = ''
-    let ok = 0
-    const fails: string[] = []
-    for (const j of jobs) {
-      patch(j.key, { state: 'up' })
-      try {
-        const res = await api.createAnalysis({
-          file: j.file,
-          serverPath: j.serverPath,
-          talcThresholdPct: parsedThreshold,
-          onUploadProgress: j.isFile
-            ? (fr) => patch(j.key, { pct: Math.min(100, Math.round(fr * 100)) })
-            : undefined,
-        })
-        if (!firstId) firstId = res.id
-        ok += 1
-        patch(j.key, { state: 'done', pct: 100 })
-      } catch (e) {
-        fails.push(errorMessage(e))
-        patch(j.key, { state: 'err' })
-      }
-    }
-    if (fails.length === 0) {
-      onCreated(firstId)
-    } else {
-      // частичный/полный сбой — не уводим со страницы, показываем сводку
-      setBusy(false)
-      setProgress(null)
-      setError(
-        ok > 0
-          ? `Поставлено ${ok} из ${total}. Не удалось: ${fails.length} — ${fails[0]}`
-          : fails[0] || 'Не удалось поставить в очередь',
-      )
-    }
+    onSubmit(items, parsedThreshold)
+    onClose()
   }
 
   return (
-    <Modal title="Новый анализ" onClose={busy ? () => undefined : onClose} width={580}>
-      {busy && progress ? (
-        <div className={s.uploadPanel}>
-          {progress.map((p) => (
-            <div key={p.key} className={s.uploadItem}>
-              <div className={s.uploadRow}>
-                <span className={s.uploadName}>{p.name}</span>
-                <span className={s.uploadStatus} data-state={p.state}>
-                  {p.state === 'done'
-                    ? '✓ в очереди'
-                    : p.state === 'err'
-                      ? 'ошибка'
-                      : p.isFile
-                        ? `${p.pct}%`
-                        : '…'}
-                </span>
-              </div>
-              {p.isFile && (p.state === 'up' || p.state === 'wait') && (
-                <ProgressBar percent={p.pct} indeterminate={p.state === 'wait'} />
-              )}
-            </div>
-          ))}
-          <div className={s.uploadNote}>
-            Файлы загружаются на сервер. Обработка пойдёт в фоне — прогресс виден
-            в журнале и на странице анализа.
-          </div>
-        </div>
-      ) : (
-        <>
+    <Modal title="Новый анализ" onClose={onClose} width={580}>
       {/* --- Загрузка файлов (можно несколько) --- */}
       <div
         className={[
@@ -330,26 +254,18 @@ export function NewAnalysisModal({
           <span className={s.paramUnit}>%</span>
         </div>
       </div>
-        </>
-      )}
 
       {error && <div className={s.error}>{error}</div>}
 
       <div className={s.footer}>
-        {busy && (
-          <div className={s.uploadState}>
-            <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <Spinner size={13} /> загрузка…{' '}
-              {progress?.filter((p) => p.state === 'done' || p.state === 'err').length ?? 0} из{' '}
-              {total}
-            </span>
-          </div>
-        )}
-        <button className="btn btn-ghost" onClick={onClose} disabled={busy} type="button">
+        <span className={s.footerHint}>
+          Загрузка и обработка идут в фоне — можно продолжать работу.
+        </span>
+        <button className="btn btn-ghost" onClick={onClose} type="button">
           Отмена
         </button>
-        <button className="btn btn-primary" onClick={() => void submit()} disabled={!canSubmit} type="button">
-          {total > 1 ? `Запустить (${total})` : 'Запустить анализ'}
+        <button className="btn btn-primary" onClick={submit} disabled={!canSubmit} type="button">
+          {total > 1 ? `В очередь (${total})` : 'В очередь'}
         </button>
       </div>
     </Modal>

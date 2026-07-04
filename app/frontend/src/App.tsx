@@ -5,6 +5,7 @@ import { AnalysisPage } from './pages/AnalysisPage'
 import { FeedbackPage } from './pages/FeedbackPage'
 import { AnnotatePage } from './pages/AnnotatePage'
 import { useHealth } from './hooks/useHealth'
+import { useUploads } from './hooks/useUploads'
 
 type Route =
   | { name: 'list' }
@@ -25,6 +26,7 @@ function parseHash(): Route {
 export default function App() {
   const [route, setRoute] = useState<Route>(parseHash)
   const { health, offline } = useHealth()
+  const { uploads, startUploads, dismiss, doneTick } = useUploads()
 
   useEffect(() => {
     const onHash = () => setRoute(parseHash())
@@ -54,7 +56,15 @@ export default function App() {
         onFeedback={goFeedback}
         active={route.name}
       />
-      {route.name === 'list' && <ListPage onOpen={goAnalysis} />}
+      {route.name === 'list' && (
+        <ListPage
+          onOpen={goAnalysis}
+          uploads={uploads}
+          startUploads={startUploads}
+          dismissUpload={dismiss}
+          uploadsDoneTick={doneTick}
+        />
+      )}
       {route.name === 'analysis' && (
         <AnalysisPage key={route.id} id={route.id} onBack={goList} onAnnotate={goAnnotate} />
       )}

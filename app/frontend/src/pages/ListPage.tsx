@@ -12,9 +12,72 @@ import {
 } from '../lib/format'
 import { Led, Modal, ProgressBar, Skeleton, Spinner } from '../components/ui'
 import { NewAnalysisModal } from '../components/NewAnalysisModal'
+import type { UploadJob, UploadRequest } from '../hooks/useUploads'
 import s from './ListPage.module.css'
 
 const ACTIVE: AnalysisStatus[] = ['queued', 'running']
+/** Цвет прогресса ЗАГРУЗКИ на сервер (обработка идёт цветом статуса). */
+const UPLOAD_COLOR = '#2f6fd6'
+
+/* ---------- Строка фоновой загрузки (файл ещё летит на сервер) ---------- */
+
+function UploadRow({ job, onDismiss }: { job: UploadJob; onDismiss: (tempId: string) => void }) {
+  const err = job.phase === 'error'
+  return (
+    <div className={s.row}>
+      <span className={s.checkCell} />
+      <div className={s.thumbWrap}>
+        {err ? (
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--err)" strokeWidth="1.5" aria-hidden>
+            <circle cx="12" cy="12" r="9" />
+            <path d="M12 7.5v5M12 16h.01" strokeLinecap="round" />
+          </svg>
+        ) : (
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden>
+            <path d="M12 16V5m0 0L7.5 9.5M12 5l4.5 4.5" strokeLinecap="round" strokeLinejoin="round" />
+            <path d="M4 17v2a1 1 0 001 1h14a1 1 0 001-1v-2" strokeLinecap="round" />
+          </svg>
+        )}
+      </div>
+      <div className={s.fileCol}>
+        <span className={s.fileName}>{job.name}</span>
+        <span className={s.fileId}>{err ? 'загрузка не удалась' : 'загрузка на сервер'}</span>
+      </div>
+      <div className={s.statusCell}>
+        {err ? (
+          <span className={s.statusLine} style={{ color: 'var(--err)' }}>
+            <Led color="var(--err)" /> ошибка загрузки
+          </span>
+        ) : (
+          <>
+            <span className={s.statusLine} style={{ color: UPLOAD_COLOR }}>
+              <Led color={UPLOAD_COLOR} pulse /> загрузка
+              {job.isFile && (
+                <span className="num" style={{ color: 'var(--text-1)' }}>{job.pct}%</span>
+              )}
+            </span>
+            <ProgressBar percent={job.pct} indeterminate={!job.isFile || job.pct === 0} color={UPLOAD_COLOR} />
+            <span className={s.stage}>{job.isFile ? 'передача файла на сервер' : 'постановка в очередь'}</span>
+          </>
+        )}
+      </div>
+      <div><span className={s.numDim}>—</span></div>
+      <div className={`${s.numCell} ${s.numDim}`}>—</div>
+      <div className={`${s.numCell} ${s.numDim} ${s.hideNarrow}`}>—</div>
+      <div className={`${s.numCell} ${s.numDim} ${s.hideNarrow}`}>—</div>
+      <div className={s.dateCell}>{err ? job.error?.slice(0, 40) : 'сейчас'}</div>
+      {err ? (
+        <button className={s.deleteBtn} onClick={() => onDismiss(job.tempId)} title="Убрать" type="button">
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden>
+            <path d="M2 2l8 8M10 2l-8 8" strokeLinecap="round" />
+          </svg>
+        </button>
+      ) : (
+        <span />
+      )}
+    </div>
+  )
+}
 
 function pluralAnalyses(n: number): string {
   const d = n % 10
@@ -172,7 +235,19 @@ function Row({
 
 /* ---------- Страница ---------- */
 
-export function ListPage({ onOpen }: { onOpen: (id: string) => void }) {
+export function ListPage({
+  onOpen,
+  uploads,
+  startUploads,
+  dismissUpload,
+  uploadsDoneTick,
+}: {
+  onOpen: (id: string) => void
+  uploads: UploadJob[]
+  startUploads: (items: UploadRequest[], threshold: number) => void
+  dismissUpload: (tempId: string) => void
+  uploadsDoneTick: number
+}) {
   const [items, setItems] = useState<AnalysisSummary[] | null>(null)
   const [loadError, setLoadError] = useState<string | null>(null)
   const [modalOpen, setModalOpen] = useState(false)
@@ -201,6 +276,11 @@ export function ListPage({ onOpen }: { onOpen: (id: string) => void }) {
   useEffect(() => {
     void load()
   }, [load])
+
+  // Файл догрузился → анализ уже в очереди на бэкенде, обновляем список.
+  useEffect(() => {
+    if (uploadsDoneTick > 0) void load()
+  }, [uploadsDoneTick, load])
 
   const hasActive = useMemo(
     () => items?.some((a) => ACTIVE.includes(a.status)) ?? false,
@@ -275,6 +355,12 @@ export function ListPage({ onOpen }: { onOpen: (id: string) => void }) {
                   <>
                     {' '}
                     · в работе <b>{items.filter((a) => ACTIVE.includes(a.status)).length}</b>
+                  </>
+                )}
+                {uploads.length > 0 && (
+                  <>
+                    {' '}
+                    · загружается <b>{uploads.length}</b>
                   </>
                 )}
               </>
@@ -374,7 +460,7 @@ export function ListPage({ onOpen }: { onOpen: (id: string) => void }) {
           </div>
         )}
 
-        {sorted !== null && sorted.length === 0 && (
+        {sorted !== null && sorted.length === 0 && uploads.length === 0 && (
           <div className={s.empty}>
             <svg className={s.emptyIcon} width="56" height="56" viewBox="0 0 48 48" fill="none" stroke="currentColor" strokeWidth="1.2" aria-hidden>
               <circle cx="24" cy="24" r="15" strokeDasharray="4 4" />
@@ -393,7 +479,7 @@ export function ListPage({ onOpen }: { onOpen: (id: string) => void }) {
           </div>
         )}
 
-        {sorted !== null && sorted.length > 0 && (
+        {sorted !== null && (sorted.length > 0 || uploads.length > 0) && (
           <>
             <div className={s.logHead}>
               <label className={s.checkCell}>
@@ -424,6 +510,9 @@ export function ListPage({ onOpen }: { onOpen: (id: string) => void }) {
               <span className="microlabel">Создан</span>
               <span className="microlabel" />
             </div>
+            {uploads.map((u) => (
+              <UploadRow key={u.tempId} job={u} onDismiss={dismissUpload} />
+            ))}
             {sorted.map((item) => (
               <Row
                 key={item.id}
@@ -442,9 +531,9 @@ export function ListPage({ onOpen }: { onOpen: (id: string) => void }) {
       {modalOpen && (
         <NewAnalysisModal
           onClose={() => setModalOpen(false)}
-          onCreated={() => {
+          onSubmit={(reqs, threshold) => {
+            startUploads(reqs, threshold)
             setModalOpen(false)
-            void load()
           }}
         />
       )}

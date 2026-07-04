@@ -171,6 +171,12 @@
   gap: 10px;
   margin-top: 22px;
 }
+.footerHint {
+  margin-right: auto;
+  max-width: 260px;
+  font: 400 11.5px/1.4 var(--font-ui);
+  color: var(--text-2);
+}
 
 .uploadState {
   flex: 1;
