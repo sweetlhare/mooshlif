@@ -67,7 +67,7 @@
 .logHead,
 .row {
   display: grid;
-  grid-template-columns: 74px minmax(180px, 1.5fr) 150px minmax(150px, 1.1fr) 92px 100px 88px 128px 44px;
+  grid-template-columns: 34px 74px minmax(180px, 1.5fr) 150px minmax(150px, 1.1fr) 92px 100px 88px 128px 44px;
   gap: 14px;
   align-items: center;
   padding: 0 18px;
@@ -258,7 +258,7 @@
 
 .skeletonRow {
   display: grid;
-  grid-template-columns: 74px 1fr 150px 1fr 92px 100px 88px 128px 44px;
+  grid-template-columns: 34px 74px 1fr 150px 1fr 92px 100px 88px 128px 44px;
   gap: 14px;
   align-items: center;
   padding: 10px 18px;
@@ -270,9 +270,82 @@
   .logHead,
   .row,
   .skeletonRow {
-    grid-template-columns: 74px minmax(150px, 1.4fr) 140px minmax(130px, 1fr) 80px 90px 44px;
+    grid-template-columns: 34px 74px minmax(150px, 1.4fr) 140px minmax(130px, 1fr) 80px 90px 44px;
   }
   .hideNarrow {
     display: none;
   }
+}
+
+/* --------- Выбор строк / чекбоксы --------- */
+.checkCell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.checkbox {
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  cursor: pointer;
+  accent-color: var(--accent);
+}
+.fileCol {
+  min-width: 0;
+}
+.rowSelected {
+  background: color-mix(in srgb, var(--accent) 9%, transparent);
+}
+.rowSelected:hover {
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
+}
+
+.selectBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 9px 16px;
+  margin-bottom: 14px;
+  border: 1px solid color-mix(in srgb, var(--accent) 45%, var(--line));
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--accent) 8%, var(--bg-1));
+  animation: fadeUp 0.2s ease both;
+}
+.selectCount {
+  font: 400 13px/1.3 var(--font-ui);
+  color: var(--text-1);
+}
+.selectCount b {
+  font-family: var(--font-mono);
+  color: var(--text-0);
+}
+.selectActions {
+  display: flex;
+  gap: 10px;
+}
+
+.dangerBtn {
+  background: var(--err);
+  border-color: transparent;
+  color: #fff;
+}
+.dangerBtn:hover:not(:disabled) {
+  filter: brightness(0.93);
+}
+
+.confirmText {
+  font: 400 13.5px/1.6 var(--font-ui);
+  color: var(--text-1);
+  margin: 0;
+}
+.confirmText b {
+  color: var(--text-0);
+  font-weight: 600;
+}
+.modalFooter {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 22px;
 }

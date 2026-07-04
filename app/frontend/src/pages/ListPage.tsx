@@ -10,21 +10,23 @@ import {
   STATUS_COLOR,
   STATUS_LABEL,
 } from '../lib/format'
-import { Led, ProgressBar, Skeleton } from '../components/ui'
+import { Led, Modal, ProgressBar, Skeleton, Spinner } from '../components/ui'
 import { NewAnalysisModal } from '../components/NewAnalysisModal'
 import s from './ListPage.module.css'
 
 const ACTIVE: AnalysisStatus[] = ['queued', 'running']
 
+function pluralAnalyses(n: number): string {
+  const d = n % 10
+  const h = n % 100
+  if (d === 1 && h !== 11) return 'анализ'
+  if (d >= 2 && d <= 4 && (h < 12 || h > 14)) return 'анализа'
+  return 'анализов'
+}
+
 /* ---------- Живой прогресс строки (SSE) ---------- */
 
-function LiveStatus({
-  item,
-  onFinal,
-}: {
-  item: AnalysisSummary
-  onFinal: () => void
-}) {
+function LiveStatus({ item, onFinal }: { item: AnalysisSummary; onFinal: () => void }) {
   const progress = useProgress(item.id, onFinal)
   const pct = progress?.percent ?? 0
   const stage =
@@ -62,38 +64,38 @@ function Row({
   item,
   onOpen,
   onChanged,
+  selected,
+  onToggle,
+  onDelete,
 }: {
   item: AnalysisSummary
   onOpen: (id: string) => void
   onChanged: () => void
+  selected: boolean
+  onToggle: (id: string) => void
+  onDelete: (id: string) => void
 }) {
-  const [confirming, setConfirming] = useState(false)
   const [thumbFailed, setThumbFailed] = useState(false)
   const active = ACTIVE.includes(item.status)
 
-  const del = async (e: React.MouseEvent) => {
-    e.stopPropagation()
-    if (!confirming) {
-      setConfirming(true)
-      window.setTimeout(() => setConfirming(false), 3500)
-      return
-    }
-    try {
-      await api.deleteAnalysis(item.id)
-    } catch {
-      /* строка исчезнет/останется после перезагрузки списка */
-    }
-    onChanged()
-  }
-
   return (
     <div
-      className={s.row}
+      className={`${s.row} ${selected ? s.rowSelected : ''}`}
       role="button"
       tabIndex={0}
       onClick={() => onOpen(item.id)}
       onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && onOpen(item.id)}
     >
+      <label className={s.checkCell} onClick={(e) => e.stopPropagation()}>
+        <input
+          type="checkbox"
+          className={s.checkbox}
+          checked={selected}
+          onChange={() => onToggle(item.id)}
+          aria-label={`Выбрать «${item.file_name}»`}
+        />
+      </label>
+
       <div className={s.thumbWrap}>
         {thumbFailed || item.status === 'queued' ? (
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" aria-hidden>
@@ -111,7 +113,7 @@ function Row({
         )}
       </div>
 
-      <div>
+      <div className={s.fileCol}>
         <div className={s.fileName}>{item.file_name}</div>
         <div className={s.fileId}>№ {item.id}</div>
       </div>
@@ -145,19 +147,17 @@ function Row({
       <div className={s.dateCell}>{fmtDateTime(item.created_at)}</div>
 
       <button
-        className={`${s.deleteBtn} ${confirming ? s.deleteConfirm : ''}`}
-        onClick={(e) => void del(e)}
-        onBlur={() => setConfirming(false)}
+        className={s.deleteBtn}
+        onClick={(e) => {
+          e.stopPropagation()
+          onDelete(item.id)
+        }}
         title="Удалить анализ"
         type="button"
       >
-        {confirming ? (
-          'Точно?'
-        ) : (
-          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.4" aria-hidden>
-            <path d="M2.5 4h11M6.5 4V2.5h3V4M4 4l.8 9.5h6.4L12 4M6.5 7v4M9.5 7v4" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-        )}
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.4" aria-hidden>
+          <path d="M2.5 4h11M6.5 4V2.5h3V4M4 4l.8 9.5h6.4L12 4M6.5 7v4M9.5 7v4" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
       </button>
     </div>
   )
@@ -169,12 +169,23 @@ export function ListPage({ onOpen }: { onOpen: (id: string) => void }) {
   const [items, setItems] = useState<AnalysisSummary[] | null>(null)
   const [loadError, setLoadError] = useState<string | null>(null)
   const [modalOpen, setModalOpen] = useState(false)
+  const [selected, setSelected] = useState<Set<string>>(new Set())
+  const [pendingDelete, setPendingDelete] = useState<string[] | null>(null)
+  const [deleting, setDeleting] = useState(false)
+  const [deleteError, setDeleteError] = useState<string | null>(null)
 
   const load = useCallback(async () => {
     try {
       const list = await api.listAnalyses()
       setItems(list)
       setLoadError(null)
+      // выкидываем из выделения исчезнувшие анализы
+      setSelected((prev) => {
+        if (prev.size === 0) return prev
+        const live = new Set(list.map((a) => a.id))
+        const next = new Set([...prev].filter((id) => live.has(id)))
+        return next.size === prev.size ? prev : next
+      })
     } catch (e) {
       setLoadError(errorMessage(e))
     }
@@ -189,7 +200,6 @@ export function ListPage({ onOpen }: { onOpen: (id: string) => void }) {
     [items],
   )
 
-  // Резервный опрос, пока есть активные анализы (SSE — основной канал).
   useEffect(() => {
     if (!hasActive) return
     const t = window.setInterval(() => void load(), 4000)
@@ -207,6 +217,43 @@ export function ListPage({ onOpen }: { onOpen: (id: string) => void }) {
         : null,
     [items],
   )
+
+  const ids = useMemo(() => sorted?.map((a) => a.id) ?? [], [sorted])
+  const allSelected = ids.length > 0 && ids.every((id) => selected.has(id))
+  const someSelected = selected.size > 0 && !allSelected
+
+  const toggle = (id: string) =>
+    setSelected((prev) => {
+      const n = new Set(prev)
+      if (n.has(id)) n.delete(id)
+      else n.add(id)
+      return n
+    })
+  const toggleAll = () => setSelected(allSelected ? new Set() : new Set(ids))
+  const clearSel = () => setSelected(new Set())
+
+  const confirmDelete = async () => {
+    if (!pendingDelete) return
+    setDeleting(true)
+    setDeleteError(null)
+    let fail = 0
+    for (const id of pendingDelete) {
+      try {
+        await api.deleteAnalysis(id)
+      } catch {
+        fail += 1
+      }
+    }
+    setDeleting(false)
+    setPendingDelete(null)
+    setSelected(new Set())
+    if (fail > 0) setDeleteError(`Не удалось удалить ${fail} из ${pendingDelete.length}`)
+    await load()
+  }
+
+  const pendingCount = pendingDelete?.length ?? 0
+  const pendingSingle =
+    pendingCount === 1 ? items?.find((i) => i.id === pendingDelete![0]) ?? null : null
 
   return (
     <main className={s.page}>
@@ -253,12 +300,42 @@ export function ListPage({ onOpen }: { onOpen: (id: string) => void }) {
           Нет связи с сервером — данные могли устареть. {loadError}
         </div>
       )}
+      {deleteError && (
+        <div className={s.offlineBanner}>
+          <Led color="var(--err)" />
+          {deleteError}
+        </div>
+      )}
+
+      {selected.size > 0 && (
+        <div className={s.selectBar}>
+          <span className={s.selectCount}>
+            Выбрано <b>{selected.size}</b> {pluralAnalyses(selected.size)}
+          </span>
+          <div className={s.selectActions}>
+            <button className="btn btn-ghost" onClick={clearSel} type="button">
+              Снять выделение
+            </button>
+            <button
+              className={`btn ${s.dangerBtn}`}
+              onClick={() => setPendingDelete([...selected])}
+              type="button"
+            >
+              <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden>
+                <path d="M2.5 4h11M6.5 4V2.5h3V4M4 4l.8 9.5h6.4L12 4" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+              Удалить выбранные
+            </button>
+          </div>
+        </div>
+      )}
 
       <div className={s.log}>
         {sorted === null && loadError === null && (
           <>
             {[0, 1, 2, 3].map((i) => (
               <div key={i} className={s.skeletonRow}>
+                <span />
                 <Skeleton width={74} height={48} />
                 <Skeleton height={14} style={{ maxWidth: 220 }} />
                 <Skeleton height={12} style={{ maxWidth: 90 }} />
@@ -281,8 +358,8 @@ export function ListPage({ onOpen }: { onOpen: (id: string) => void }) {
             </svg>
             <div className={s.deadTitle}>Сервер недоступен</div>
             <div className={s.deadText}>
-              Не удалось получить список анализов. Убедитесь, что бэкенд запущен
-              (по умолчанию — http://localhost:8000), и повторите попытку.
+              Не удалось получить список анализов. Убедитесь, что бэкенд запущен, и
+              повторите попытку.
             </div>
             <button className="btn" onClick={() => void load()} type="button">
               Повторить
@@ -312,6 +389,18 @@ export function ListPage({ onOpen }: { onOpen: (id: string) => void }) {
         {sorted !== null && sorted.length > 0 && (
           <>
             <div className={s.logHead}>
+              <label className={s.checkCell}>
+                <input
+                  type="checkbox"
+                  className={s.checkbox}
+                  checked={allSelected}
+                  ref={(el) => {
+                    if (el) el.indeterminate = someSelected
+                  }}
+                  onChange={toggleAll}
+                  aria-label="Выбрать все"
+                />
+              </label>
               <span className="microlabel" />
               <span className="microlabel">Файл</span>
               <span className="microlabel">Статус</span>
@@ -329,7 +418,15 @@ export function ListPage({ onOpen }: { onOpen: (id: string) => void }) {
               <span className="microlabel" />
             </div>
             {sorted.map((item) => (
-              <Row key={item.id} item={item} onOpen={onOpen} onChanged={() => void load()} />
+              <Row
+                key={item.id}
+                item={item}
+                onOpen={onOpen}
+                onChanged={() => void load()}
+                selected={selected.has(item.id)}
+                onToggle={toggle}
+                onDelete={(id) => setPendingDelete([id])}
+              />
             ))}
           </>
         )}
@@ -343,6 +440,54 @@ export function ListPage({ onOpen }: { onOpen: (id: string) => void }) {
             void load()
           }}
         />
+      )}
+
+      {pendingDelete && (
+        <Modal
+          title={pendingCount === 1 ? 'Удалить анализ?' : 'Удалить анализы?'}
+          width={440}
+          onClose={deleting ? () => undefined : () => setPendingDelete(null)}
+        >
+          <p className={s.confirmText}>
+            {pendingSingle ? (
+              <>
+                Удалить анализ <b>«{pendingSingle.file_name}»</b>?
+              </>
+            ) : (
+              <>
+                Удалить <b>{pendingCount}</b> {pluralAnalyses(pendingCount)}?
+              </>
+            )}
+            <br />
+            Действие необратимо — снимок, маски и отчёты будут удалены.
+          </p>
+          <div className={s.modalFooter}>
+            <button
+              className="btn btn-ghost"
+              onClick={() => setPendingDelete(null)}
+              disabled={deleting}
+              type="button"
+            >
+              Отмена
+            </button>
+            <button
+              className={`btn ${s.dangerBtn}`}
+              onClick={() => void confirmDelete()}
+              disabled={deleting}
+              type="button"
+            >
+              {deleting ? (
+                <>
+                  <Spinner size={13} /> удаление…
+                </>
+              ) : pendingCount === 1 ? (
+                'Удалить'
+              ) : (
+                `Удалить ${pendingCount}`
+              )}
+            </button>
+          </div>
+        </Modal>
       )}
     </main>
   )
