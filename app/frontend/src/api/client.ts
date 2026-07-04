@@ -24,20 +24,40 @@ export function errorMessage(e: unknown): string {
   return 'Неизвестная ошибка'
 }
 
+/** Достаёт человекочитаемый detail из ответа FastAPI (в т.ч. массив ошибок 422). */
+function extractDetail(body: unknown, status: number): string {
+  if (body && typeof body === 'object' && 'detail' in body) {
+    const d = (body as { detail: unknown }).detail
+    if (typeof d === 'string') return d
+    if (Array.isArray(d)) {
+      const msgs = d
+        .map((x) => (x && typeof x === 'object' && 'msg' in x ? String((x as { msg: unknown }).msg) : ''))
+        .filter(Boolean)
+      if (msgs.length) return msgs.join('; ')
+    }
+  }
+  return `Ошибка сервера (HTTP ${status})`
+}
+
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
+  const ctrl = new AbortController()
+  const timer = setTimeout(() => ctrl.abort(), 30000)
   let res: Response
   try {
-    res = await fetch(API + path, init)
-  } catch {
-    throw new ApiError('Сервер недоступен')
+    res = await fetch(API + path, { ...init, signal: ctrl.signal })
+  } catch (e) {
+    throw new ApiError(
+      (e as Error | undefined)?.name === 'AbortError'
+        ? 'Превышено время ожидания сервера'
+        : 'Сервер недоступен',
+    )
+  } finally {
+    clearTimeout(timer)
   }
   if (!res.ok) {
     let detail = `Ошибка сервера (HTTP ${res.status})`
     try {
-      const body: unknown = await res.json()
-      if (body && typeof body === 'object' && 'detail' in body) {
-        detail = String((body as { detail: unknown }).detail)
-      }
+      detail = extractDetail(await res.json(), res.status)
     } catch {
       /* тело не JSON — оставляем общее сообщение */
     }
@@ -82,12 +102,12 @@ function createAnalysis(opts: CreateAnalysisOptions): Promise<CreateAnalysisResp
       if (xhr.status >= 200 && xhr.status < 300) {
         resolve(xhr.response as CreateAnalysisResponse)
       } else {
-        const body = xhr.response as { detail?: unknown } | null
-        const detail = body?.detail != null ? String(body.detail) : `Ошибка сервера (HTTP ${xhr.status})`
-        reject(new ApiError(detail, xhr.status))
+        reject(new ApiError(extractDetail(xhr.response, xhr.status), xhr.status))
       }
     }
     xhr.onerror = () => reject(new ApiError('Сервер недоступен'))
+    xhr.timeout = 20 * 60 * 1000
+    xhr.ontimeout = () => reject(new ApiError('Превышено время ожидания загрузки'))
     xhr.send(fd)
   })
 }

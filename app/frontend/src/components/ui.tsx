@@ -1,4 +1,4 @@
-import { useEffect, type CSSProperties, type ReactNode } from 'react'
+import { useEffect, useId, useRef, type CSSProperties, type ReactNode } from 'react'
 import s from './ui.module.css'
 
 /* ---------- Светодиод ---------- */
@@ -77,19 +77,52 @@ export function Modal({
   onClose: () => void
   children: ReactNode
 }) {
+  const modalRef = useRef<HTMLDivElement>(null)
+  const titleId = useId()
+
   useEffect(() => {
+    const prevFocus = document.activeElement as HTMLElement | null
+    const focusables = () =>
+      modalRef.current
+        ? Array.from(
+            modalRef.current.querySelectorAll<HTMLElement>(
+              'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
+            ),
+          ).filter((el) => !el.hasAttribute('disabled') && el.offsetParent !== null)
+        : []
+    focusables()[0]?.focus()
+
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose()
+      if (e.key === 'Escape') {
+        onClose()
+        return
+      }
+      if (e.key === 'Tab') {
+        const f = focusables()
+        if (f.length === 0) return
+        const first = f[0]
+        const last = f[f.length - 1]
+        if (e.shiftKey && document.activeElement === first) {
+          e.preventDefault()
+          last.focus()
+        } else if (!e.shiftKey && document.activeElement === last) {
+          e.preventDefault()
+          first.focus()
+        }
+      }
     }
     window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
+    return () => {
+      window.removeEventListener('keydown', onKey)
+      prevFocus?.focus?.()
+    }
   }, [onClose])
 
   return (
     <div className={s.overlay} onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
-      <div className={s.modal} style={{ maxWidth: width }} role="dialog" aria-modal>
+      <div ref={modalRef} className={s.modal} style={{ maxWidth: width }} role="dialog" aria-modal aria-labelledby={titleId}>
         <div className={s.modalHead}>
-          <div className={s.modalTitle}>{title}</div>
+          <div className={s.modalTitle} id={titleId}>{title}</div>
           <button className={s.modalClose} onClick={onClose} aria-label="Закрыть" type="button">
             <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.6">
               <path d="M2 2l10 10M12 2L2 12" strokeLinecap="round" />

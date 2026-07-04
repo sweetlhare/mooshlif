@@ -135,12 +135,17 @@ export function NewAnalysisModal({
         patch(j.key, { state: 'err' })
       }
     }
-    if (ok > 0) {
+    if (fails.length === 0) {
       onCreated(firstId)
     } else {
-      setError(fails[0] || 'Не удалось поставить в очередь')
+      // частичный/полный сбой — не уводим со страницы, показываем сводку
       setBusy(false)
       setProgress(null)
+      setError(
+        ok > 0
+          ? `Поставлено ${ok} из ${total}. Не удалось: ${fails.length} — ${fails[0]}`
+          : fails[0] || 'Не удалось поставить в очередь',
+      )
     }
   }
 
@@ -272,6 +277,7 @@ export function NewAnalysisModal({
               key={d.server_path}
               className={`${s.demoItem} ${isDemoSelected(d) ? s.demoItemActive : ''}`}
               onClick={() => toggleDemo(d)}
+              aria-pressed={isDemoSelected(d)}
               type="button"
             >
               <span className={s.demoName}>

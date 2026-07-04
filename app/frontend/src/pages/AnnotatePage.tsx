@@ -41,11 +41,35 @@ export function AnnotatePage({ id, onBack }: { id: string; onBack: () => void })
   }
 
   useEffect(() => {
-    api.annotationPhases().then((p) => {
-      setPhases(p)
-      if (p.length) setPhase(p[0].key)
-    })
+    let cancelled = false
+    api
+      .annotationPhases()
+      .then((p) => {
+        if (cancelled) return
+        setPhases(p)
+        if (p.length) setPhase(p[0].key)
+      })
+      .catch(() => !cancelled && setErr('Не удалось загрузить палитру фаз'))
+    return () => {
+      cancelled = true
+    }
   }, [])
+
+  // Предупреждаем о несохранённой разметке при закрытии/перезагрузке вкладки.
+  useEffect(() => {
+    if (!dirty) return
+    const onBeforeUnload = (e: BeforeUnloadEvent) => {
+      e.preventDefault()
+      e.returnValue = ''
+    }
+    window.addEventListener('beforeunload', onBeforeUnload)
+    return () => window.removeEventListener('beforeunload', onBeforeUnload)
+  }, [dirty])
+
+  const guardedBack = () => {
+    if (dirty && !window.confirm('Разметка не сохранена. Выйти без сохранения?')) return
+    onBack()
+  }
 
   const applyView = () => {
     const { scale, tx, ty } = view.current
@@ -300,6 +324,7 @@ export function AnnotatePage({ id, onBack }: { id: string; onBack: () => void })
   }
 
   const clearAll = () => {
+    if (!window.confirm('Стереть всю разметку на снимке?')) return
     const cv = canvasRef.current
     cv?.getContext('2d')?.clearRect(0, 0, cv.width, cv.height)
     cancelPoly()
@@ -338,7 +363,7 @@ export function AnnotatePage({ id, onBack }: { id: string; onBack: () => void })
   return (
     <div className={s.page}>
       <div className={s.toolbar}>
-        <button className="btn btn-ghost" onClick={onBack} type="button">
+        <button className="btn btn-ghost" onClick={guardedBack} type="button">
           ← Очередь
         </button>
         <div className={s.palette}>

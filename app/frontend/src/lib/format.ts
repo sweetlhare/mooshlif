@@ -1,7 +1,8 @@
 import type { AnalysisStatus } from '../api/types'
 
 /** Форматирование числа в русской локали (десятичная запятая, неразрывные разряды). */
-export function fmtNum(x: number, digits = 1): string {
+export function fmtNum(x: number | null | undefined, digits = 1): string {
+  if (x == null || !Number.isFinite(x)) return '—'
   return x.toLocaleString('ru-RU', {
     minimumFractionDigits: 0,
     maximumFractionDigits: digits,

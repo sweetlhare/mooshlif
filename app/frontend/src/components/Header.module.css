@@ -118,3 +118,26 @@
   color: var(--err);
   letter-spacing: 0.06em;
 }
+
+/* Узкие экраны: прячем тэглайн и версии моделей, чтобы шапка не расползалась */
+@media (max-width: 720px) {
+  .header {
+    padding-left: 14px;
+    padding-right: 14px;
+    gap: 12px;
+  }
+  .tagline {
+    display: none;
+  }
+  .wordmarkWrap {
+    min-width: 0;
+  }
+  .wordmark {
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .healthSep,
+  .health .healthModels {
+    display: none;
+  }
+}

@@ -76,7 +76,10 @@ function Row({
   onDelete: (id: string) => void
 }) {
   const [thumbFailed, setThumbFailed] = useState(false)
-  const active = ACTIVE.includes(item.status)
+  // Живой SSE-поток держим ТОЛЬКО для выполняющегося анализа: очередь
+  // обновляется общим 4-секундным опросом, иначе пачка задач упирается в
+  // лимит одновременных соединений браузера (~6 на хост по HTTP/1.1).
+  const live = item.status === 'running'
 
   return (
     <div
@@ -84,7 +87,12 @@ function Row({
       role="button"
       tabIndex={0}
       onClick={() => onOpen(item.id)}
-      onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && onOpen(item.id)}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault()
+          onOpen(item.id)
+        }
+      }}
     >
       <label className={s.checkCell} onClick={(e) => e.stopPropagation()}>
         <input
@@ -118,7 +126,7 @@ function Row({
         <div className={s.fileId}>№ {item.id}</div>
       </div>
 
-      {active ? (
+      {live ? (
         <LiveStatus item={item} onFinal={onChanged} />
       ) : (
         <StaticStatus status={item.status} />
