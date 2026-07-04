@@ -33,7 +33,13 @@ class TalcDetector:
         self._ref_stats: Optional[dict] = None
         self._calib: Optional[dict] = None
         if cfg.model_path and Path(cfg.model_path).exists():
-            self._load_model(cfg.model_path)
+            try:
+                self._load_model(cfg.model_path)
+            except Exception as e:  # noqa: BLE001 — не роняем анализ из-за модели
+                import sys
+                print(f"[talc] не удалось загрузить {cfg.model_path}: {e!r}; "
+                      "переключаюсь на классическую детекцию", file=sys.stderr)
+                self._model = None
 
     # ------------------------------------------------------------------ U-Net
     def _load_model(self, path: str) -> None:

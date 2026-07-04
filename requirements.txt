@@ -1,7 +1,7 @@
 numpy>=1.26
 opencv-python-headless>=4.10
 scikit-image>=0.25
-scikit-learn>=1.7
+scikit-learn==1.7.0
 scipy>=1.15
 pillow>=10
 pandas>=2.1
