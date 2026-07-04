@@ -1,0 +1,1294 @@
+[
+ {
+  "angle": "Label-noise-robust learning for the talc problem, where the dominant noise is ASYMMETRIC and SPATIALLY STRUCTURED: (a) false positives — sulfides/gray phase mislabeled as talc inside the unclosed blue contour outlines, and (b) incomplete/partial annotation — much real talc left unlabeled (i.e. unlabeled positives treated as negative). This is closer to a noisy-segmentation + positive-unlabeled setting than to the symmetric class-flip noise most classification papers assume. Two constraints shape the verdicts: (1) the tiny/noisy val (8 talc images) makes any method that needs a clean meta/validation subset or aggressive per-sample selection unreliable; (2) the prior self-training regression (v6, 18.8 vs 10.2 MAE) is a standing warning that aggressive relabeling that conflicts with the dense labels hurts — so relabeling-based methods must be applied conservatively and keep the trusted dense masks fixed. Segmentation-native robust methods (drop-in robust pixel losses, offline mask cleaning, early-learning correction, superpixel structure) are far more applicable than image-classification co-training methods; the latter mostly apply only to the image-level talc-vote and srastanie heads and are down-weighted here.",
+  "findings": [
+   {
+    "name": "Robust T-Loss (Student-t negative log-likelihood loss)",
+    "kind": "method",
+    "summary": "MICCAI 2023 drop-in per-pixel segmentation loss inspired by the Student-t NLL. A single tolerance parameter nu is LEARNED during backprop, letting the loss automatically down-weight outlier pixels (mislabeled pixels) without any prior on noise level/spread. Beats CE/Dice under simulated human-like label noise on skin-lesion and lung segmentation.",
+    "applicability": "Best fast win. The false-positive sulfide pixels inside talc contours are exactly the 'outlier pixels' T-Loss is built to suppress. It is a single nn.Module you swap in for (or blend with) our current pCE+GCE in the weak-supervision U-Net; no architecture, no extra data, no clean subset needed. The self-adapting nu removes a hyperparameter we would otherwise have to tune on the tiny noisy val. Keep GatedCRF as-is.",
+    "verdict": "adopt",
+    "effort": "low",
+    "license": "Apache-2.0",
+    "link": "https://github.com/Digital-Dermatology/t-loss",
+    "year": "2023"
+   },
+   {
+    "name": "cleanlab — Confident Learning for semantic segmentation (cleanlab.segmentation)",
+    "kind": "code",
+    "summary": "Maintained data-centric library; the segmentation module's find_label_issues(labels, pred_probs) takes per-pixel out-of-sample predicted probabilities (N,K,H,W) plus noisy masks (N,H,W) and returns per-pixel/per-image label-error scores + get_label_quality_scores to rank the worst regions. Model-agnostic, runs offline after training.",
+    "applicability": "Directly targets our exact noise. Run our current U-Net (cross-val / held-out folds) to get pred_probs, then flag talc-labeled pixels the model confidently thinks are sulfide/gray = the false positives inside the unclosed contours. Use the flagged map to (a) mask those pixels out of the loss, or (b) auto-correct masks before retraining — a principled, quantitative complement to SAMRefiner. Also usable image-level to audit which of the 8 val / weak-label images are worst. Apache-2.0 is competition-safe (unlike some GPL tooling). Caveat: needs decent pred_probs, so bootstrap from current model.",
+    "verdict": "adopt",
+    "effort": "medium",
+    "license": "Apache-2.0",
+    "link": "https://github.com/cleanlab/cleanlab",
+    "year": "2024"
+   },
+   {
+    "name": "ADELE — Adaptive Early-Learning Correction for Segmentation from Noisy Annotations",
+    "kind": "method",
+    "summary": "CVPR 2022 Oral, PyTorch. Two ingredients: (1) monitors the per-CATEGORY IoU-vs-epoch curve and, when it bends (start of memorization), begins correcting labels for that class only using confident model predictions (thresholds tau_fg/tau_bg, curve-fit trigger r); (2) a multi-scale JS-divergence CONSISTENCY regularizer (jsd-lambda, rho) that enforces agreement across scales to resist noise. Built for weakly/noisily-annotated segmentation.",
+    "applicability": "The most task-native correction method. Per-class timing matters for us: talc and sulfide memorize at different rates, and ADELE would begin fixing false-positive talc pixels only after the clean-learning phase, exactly when confidence is trustworthy. The multi-scale JS consistency term is philosophically the same family as our GatedCRF and stacks with it. IMPORTANT given our v6 self-training regression: ADELE corrects gradually and per-class rather than wholesale pseudo-labeling, which is the safer version of what regressed. Effort is high: repo is coupled to ResNet38/SEAM + Comet, so port the correction-trigger + JS-consistency logic into our U-Net rather than run it as-is. Needs enough labeled images to fit the IoU curve — our 8-image val is thin, so drive the trigger off the larger weak-label training set.",
+    "verdict": "try",
+    "effort": "high",
+    "license": "not stated in repo (research code — verify before shipping)",
+    "link": "https://github.com/Kangningthu/ADELE",
+    "year": "2022"
+   },
+   {
+    "name": "Superpixel-guided Iterative Learning from Noisy Labels for Medical Segmentation (SP_guided)",
+    "kind": "method",
+    "summary": "MICCAI 2021, PyTorch. Represents the image as superpixels, then alternates noise-aware training (superpixel-level small-loss selection) with superpixel-guided relabeling, exploiting the structural prior that a superpixel is internally homogeneous. Includes superpixel generation + noise-ratio estimation code.",
+    "applicability": "We ALREADY compute LAB/superpixel-style regions, so the structural machinery is half-built. Superpixels align talc/sulfide boundaries and would stop a contour-outline false positive from bleeding pixel-by-pixel — corrections happen at the region level, which fits the unclosed-contour geometry well. Strong conceptual fit. Caution flag from v6: the iterative relabeling is the same mechanism that regressed under self-training, so freeze the trusted dense masks, apply relabeling only to weak/contour regions, and gate on superpixel-level confidence.",
+    "verdict": "try",
+    "effort": "medium",
+    "license": "not stated in repo (research code — verify)",
+    "link": "https://github.com/gaozhitong/SP_guided_Noisy_Label_Seg",
+    "year": "2021"
+   },
+   {
+    "name": "Active Negative Loss (ANL) — successor to APL/NCE+RCE",
+    "kind": "method",
+    "summary": "2023-2025 framework that replaces APL's passive MAE term with Normalized Negative Loss Functions, fixing APL's slow convergence / equal attention to noisy samples, and adds an entropy-based regularizer specifically for NON-symmetric (asymmetric) noise and label imbalance. Reports better-or-comparable results to SOTA and is explicitly evaluated on image SEGMENTATION.",
+    "applicability": "Most relevant of the robust-loss family because our noise is asymmetric (talc->real, but label-talc-actually-sulfide) and class-imbalanced (talc is a minority phase) — precisely what ANL's entropy regularizer targets, and precisely where our current GCE is weakest. It is a pixel-wise loss swap into the U-Net, so cheap to A/B against GCE and T-Loss. CC-BY-4.0 is usable. Worth benchmarking head-to-head with T-Loss.",
+    "verdict": "try",
+    "effort": "low",
+    "license": "CC-BY-4.0",
+    "link": "https://github.com/Virusdoll/Active-Negative-Loss",
+    "year": "2024"
+   },
+   {
+    "name": "Active Passive Loss (APL): Normalized losses NCE+RCE",
+    "kind": "method",
+    "summary": "ICML 2020. Shows any loss can be made noise-robust by normalization, but a normalized loss alone underfits; combines an Active (NCE) and Passive (NRCE/MAE) loss as alpha*Active + beta*Passive. NCE+RCE is a long-standing SOTA-robust baseline.",
+    "applicability": "Our current GCE is one point in this design space; NCE+RCE is a stronger, well-tested alternative that is a direct pixel-loss swap. Cheap baseline to include in the loss bake-off, but ANL supersedes it for asymmetric/imbalanced noise, so treat APL as the reference point rather than the target.",
+    "verdict": "try",
+    "effort": "low",
+    "license": "MIT (verify)",
+    "link": "https://github.com/HanxunH/Active-Passive-Losses",
+    "year": "2020"
+   },
+   {
+    "name": "Generalized Jensen-Shannon Divergence loss (GJS)",
+    "kind": "method",
+    "summary": "NeurIPS 2021. JS-divergence loss that provably interpolates between CE and MAE via a mixing weight; the generalized multi-distribution form (GJS) adds a consistency term over augmentations. Strong on real-world noise (WebVision) not just synthetic CIFAR.",
+    "applicability": "A tunable CE<->MAE dial is a cleaner, better-understood knob than our GCE q, and the built-in augmentation-consistency term is a free semi-supervised signal we can point at the MANY unlabeled ч2/panorama tiles without the pseudo-label conflict that sank v6 (it regularizes agreement, it does not hard-relabel). Pixel-wise loss swap. Good candidate for the loss bake-off.",
+    "verdict": "try",
+    "effort": "low",
+    "license": "MIT (verify)",
+    "link": "https://github.com/ErikEnglesson/GJS",
+    "year": "2021"
+   },
+   {
+    "name": "Asymmetric Loss Functions for Learning with Noisy Labels (ALFs)",
+    "kind": "method",
+    "summary": "ICML 2021 (+ T-PAMI extension). Introduces the 'asymmetry ratio' and proves that a higher asymmetry ratio yields better noise tolerance for ARBITRARY noise type; gives asymmetric variants of common losses (e.g. AGCE, AUL, AEL) with necessary/sufficient conditions.",
+    "applicability": "Theoretically the best-matched loss family to our problem because our noise is genuinely asymmetric (one direction dominates). AGCE (asymmetric generalized CE) is a near-drop-in upgrade of our existing GCE. Low-cost swap; include in the same bake-off as ANL/GJS/T-Loss and let the (small but real) val pick.",
+    "verdict": "try",
+    "effort": "low",
+    "license": "MIT (verify)",
+    "link": "https://github.com/hitcszx/ALFs",
+    "year": "2021"
+   },
+   {
+    "name": "ELR / ELR+ — Early-Learning Regularization",
+    "kind": "method",
+    "summary": "NeurIPS 2020, PyTorch. Exploits that nets fit clean labels first, then memorize noise; keeps a running (EMA) target of early predictions per sample and adds a regularizer pulling logits toward it, implicitly preventing memorization of wrong labels. ELR+ adds mixup + two-model ensembling.",
+    "applicability": "Cleanest fit for our IMAGE-LEVEL heads (DINOv2+LogReg talc-vote, srastanie GBM/LogReg), where per-sample EMA targets are trivial to track and the '8 noisy talc images' problem is a label-noise problem. For the U-Net, the segmentation-adapted version is ADELE, so use ELR at the head, ADELE at the pixels. ELR+ (two models) is heavier and its data appetite makes it less attractive given our tiny sets — prefer plain ELR.",
+    "verdict": "try",
+    "effort": "medium",
+    "license": "MIT",
+    "link": "https://github.com/shengliu66/ELR",
+    "year": "2020"
+   },
+   {
+    "name": "SOP — Robust Training under Label Noise by Over-parameterization",
+    "kind": "method",
+    "summary": "ICML 2022, from the ELR authors. Adds a per-sample sparse over-parameterization variable that absorbs the (sparse, incoherent) label corruption, recovered via SGD's implicit bias; SOTA on INSTANCE-DEPENDENT noise, which class-flip methods handle poorly.",
+    "applicability": "Our noise is instance-dependent (whether a talc contour contains sulfide depends on the specific image content), which is SOP's home turf and a gap in symmetric-noise methods. Applicable to the classification heads (needs stable per-sample indices). More experimental than ELR and adds per-sample params, so second-tier after ELR unless ELR underdelivers.",
+    "verdict": "try",
+    "effort": "medium",
+    "license": "MIT (verify)",
+    "link": "https://github.com/shengliu66/SOP",
+    "year": "2022"
+   },
+   {
+    "name": "Confident Learning for Noisy-Labeled Image Segmentation (teacher-student + spatial label smoothing)",
+    "kind": "paper",
+    "summary": "MICCAI 2020. Teacher model + confident learning localizes suspected wrong-labeled pixels; because the noise map is imprecise, SPATIAL label smoothing turns it into soft-corrected masks used to train the student. Pixel-level correction, not just per-mask down-weighting.",
+    "applicability": "A concrete recipe for turning cleanlab's per-pixel error map (see cleanlab entry) into soft-corrected training masks — the spatial-smoothing step is important because our contour noise is imprecise and hard thresholding would over-cut. Use as the design blueprint for the correction step; the standalone repo is research-grade, so borrow the method rather than the code.",
+    "verdict": "reference",
+    "effort": "medium",
+    "license": "not stated in repo (research code)",
+    "link": "https://github.com/502463708/Confident_Learning_for_Noisy-labeled_Medical_Image_Segmentation",
+    "year": "2020"
+   },
+   {
+    "name": "Positive-Unlabeled (PU / nnPU) learning for incomplete annotation",
+    "kind": "method",
+    "summary": "Family of methods (nnPU loss; histopathology cell/segmentation variants with field-of-view consistency, partial-points supervision) that treat unlabeled pixels as UNLABELED rather than negative, avoiding the false-negative penalty that ordinary CE incurs when real positives are unmarked.",
+    "applicability": "Addresses the OTHER half of our noise that the robust-loss papers ignore: talc is only PARTIALLY annotated, so every unmarked talc pixel is currently a false-negative training signal. Reframing the talc head as PU (labeled-talc = positive, rest = unlabeled) or adding an nnPU term stops us punishing the model for finding real, unannotated talc — directly relevant to the incomplete-annotation pain and to lowering the doля-talc MAE bias. Medium effort: needs an estimate of the talc prior (class prevalence), which stereology/ASTM E562 or image-level votes can seed.",
+    "verdict": "try",
+    "effort": "medium",
+    "license": "varies by repo (mostly research code)",
+    "link": "https://github.com/mayonezu216/Awesome-PU-learning",
+    "year": "2023"
+   },
+   {
+    "name": "Symmetric Cross Entropy (SCE / SL) = CE + RCE",
+    "kind": "method",
+    "summary": "ICCV 2019. Boosts CE with a noise-robust Reverse CE term (SCE = alpha*CE + beta*RCE); the conceptual ancestor of APL/ANL. PyTorch reimplementation available.",
+    "applicability": "Historically important but subsumed by APL/ANL/ALFs for our asymmetric case, and we already run GCE (same robust-loss lineage). Keep as a cheap sanity baseline in the loss bake-off; not a target.",
+    "verdict": "reference",
+    "effort": "low",
+    "license": "research code (verify)",
+    "link": "https://github.com/HanxunH/SCELoss-Reproduce",
+    "year": "2019"
+   },
+   {
+    "name": "Taylor Cross Entropy loss (Can CE Be Robust to Label Noise?)",
+    "kind": "paper",
+    "summary": "IJCAI 2020. Truncates the Taylor series of CCE to order t; small t approaches bounded (MAE-like, robust) behavior, large t recovers CE — one knob trades fitting vs robustness, with theoretical bounded-loss guarantees.",
+    "applicability": "Same CE<->MAE trade-off as GCE/GJS with one hyperparameter; no strong official code found (community reimplementations only). No advantage over GJS/ANL/ALFs for us, so treat as a conceptual reference rather than something to integrate.",
+    "verdict": "reference",
+    "effort": "low",
+    "license": "n/a (no official repo found)",
+    "link": "https://www.ijcai.org/proceedings/2020/0305.pdf",
+    "year": "2020"
+   },
+   {
+    "name": "Bootstrapping (soft / hard) — Reed et al.",
+    "kind": "paper",
+    "summary": "arXiv 2014. Augments the target with the model's own prediction: t' = beta*label + (1-beta)*pred (soft) or one-hot(pred) (hard); the original self-correction idea, beta≈0.8 (hard) / 0.95 (soft).",
+    "applicability": "Foundational but fully subsumed by ELR/ADELE, which are the modern, better-behaved descendants. Its naive self-targeting is close in spirit to what caused our v6 self-training regression, so do NOT adopt directly. Cite as lineage only.",
+    "verdict": "skip",
+    "effort": "low",
+    "license": "n/a (no official repo)",
+    "link": "https://arxiv.org/abs/1412.6596",
+    "year": "2014"
+   },
+   {
+    "name": "Co-teaching / Co-teaching+ / JoCoR (co-training with small-loss selection)",
+    "kind": "method",
+    "summary": "NeurIPS 2018 / ICML 2019 / CVPR 2020. Train two nets; each selects small-loss (presumed-clean) samples to teach the other (Co-teaching), with disagreement (Co-teaching+) or agreement+co-regularization (JoCoR) to avoid collapse. Unified PyTorch impl in chengtan9907/Co-learning.",
+    "applicability": "Designed for IMAGE CLASSIFICATION with per-sample labels and a known/sizable noise rate over many samples — a poor fit for dense partial masks, and risky on our tiny sets (small-loss selection is unstable with a handful of noisy val images and would just discard the minority talc signal). At most applicable to the srastanie / talc-vote heads, but even there DINOv2+LogReg is likely more robust than doubling into two trained nets. Keep as reference; low priority.",
+    "verdict": "reference",
+    "effort": "medium",
+    "license": "MIT (JoCoR/Co-teaching repos)",
+    "link": "https://github.com/chengtan9907/Co-learning-Learning-from-noisy-labels-with-self-supervision",
+    "year": "2020"
+   },
+   {
+    "name": "DivideMix",
+    "kind": "method",
+    "summary": "ICLR 2020. Fits a per-sample-loss GMM to split data into clean/noisy, discards noisy LABELS and treats those samples as unlabeled, then trains two nets with MixMatch semi-supervised learning + co-divide to fight confirmation bias.",
+    "applicability": "Powerful for large noisy classification sets, but the wrong tool here: it is per-image-label and heavy (2 nets + MixMatch), needs substantial data for a stable GMM split, and its 'treat noisy as unlabeled then semi-supervise' loop is exactly the pattern that produced our v6 regression when pseudo-labels conflicted with dense labels. Not for pixel masks. Borrow only the idea of a loss-based clean/noisy split (cleanlab does this more cheaply and offline).",
+    "verdict": "skip",
+    "effort": "high",
+    "license": "MIT",
+    "link": "https://github.com/LiJunnan1992/DivideMix",
+    "year": "2020"
+   }
+  ],
+  "top_recommendations": [
+   "IMMEDIATE (low effort, high ROI): run a pixel-loss bake-off in the existing weak-supervision U-Net. Swap/blend our pCE+GCE against Robust T-Loss (Apache-2.0, self-learned outlier tolerance), Active Negative Loss (asymmetric+imbalance-aware), Asymmetric GCE (AGCE from ALFs), and GJS. Our noise is asymmetric+imbalanced, so T-Loss and ANL/AGCE are the most likely wins over plain GCE; keep GatedCRF. Pick by val MAE + qualitative false-positive suppression, accepting the 8-image val is noisy.",
+   "OFFLINE MASK CLEANING (Apache-2.0, no training-loop risk): use cleanlab.segmentation.find_label_issues with cross-validated per-pixel pred_probs from our U-Net to localize the sulfide-inside-talc false positives, then produce soft-corrected masks via spatial label smoothing (per the MICCAI-2020 confident-learning-segmentation recipe). This is a principled, quantitative complement to SAMRefiner that attacks the exact noise mechanism, and it also audits which weak-label/val images are worst.",
+   "MEDIUM-TERM STRUCTURED CORRECTION: adapt ADELE's per-CLASS early-learning correction + multi-scale JS consistency into our U-Net, and/or SP_guided superpixel-level relabeling (we already compute superpixels). Both correct conservatively and per-region rather than wholesale — the safe version of what caused the v6 self-training regression — so FREEZE trusted dense masks and only correct weak/contour regions, gated on confidence.",
+   "UNDER-RATED ANGLE — incomplete annotation is Positive-Unlabeled, not just noisy: much real talc is unlabeled, so ordinary CE punishes the model for correct detections. Add an nnPU/PU term (labeled-talc = positive, rest = unlabeled) seeded with a talc prior from stereology/image-level votes; this directly reduces the doля-talc under-estimation bias that the robust-loss papers do not address.",
+   "DE-PRIORITIZE for this problem: Co-teaching/Co-teaching+/JoCoR and DivideMix are image-classification, two-network, data-hungry methods whose small-loss/GMM selection is unstable on our tiny noisy sets and echoes the v6 regression; Bootstrapping and Symmetric-CE/Taylor-CE are superseded by the losses above. Reserve ELR (plain) and SOP for the image-level talc-vote / srastanie heads, where per-sample EMA targets are natural and instance-dependent noise (SOP) is the right model."
+  ]
+ },
+ {
+  "angle": "Weakly-supervised segmentation from scribbles/points/partial masks (WSSS) for the talc problem: your label = thin, unclosed blue outlines, partial coverage, with false-positive sulfides inside. The honest way to use such labels has three moves that recur across the literature: (1) NEVER treat unmarked pixels as background — use IGNORE regions / partial cross-entropy (you do this) AND, more correctly, positive-unlabeled framing (unmarked = unlabeled, not negative); (2) EXPAND seeds via affinity on strong features rather than raw self-training — MST/tree affinity, random-walk, or a per-image classifier on DINOv2 features generalizes sparse scribbles to dense masks without the pseudo-label-vs-dense-label conflict that regressed your v6; (3) GATE any pseudo-label by uncertainty/entropy and keep it SOFT — naive entropy-minimization over-sharpens boundaries and amplifies incomplete-label bias, which is likely part of your v6 regression. The single biggest find is a group (tldr-group, Imperial) doing exactly your setup — DINOv2 upsampled features + sparse user scribbles + a cheap classifier — on materials micrographs INCLUDING reflected-light copper-ore-in-epoxy. That is a near drop-in for your stack and sidesteps U-Net's need for dense labels. Below, methods are ordered by fit to your specific pains; I flag honestly where something is pretrain-only, superseded, or a poor fit (e.g. TEL's CUDA cost, PU's need for a talc class-prior).",
+  "findings": [
+   {
+    "name": "HR-Dv2: Upsampling DINOv2 features for weakly-supervised materials segmentation",
+    "kind": "code",
+    "year": "2024/2026",
+    "link": "https://arxiv.org/abs/2410.19836 (code: https://github.com/tldr-group/HR-Dv2)",
+    "license": "MIT",
+    "summary": "Training-free single-forward-pass upsampling of DINOv2 features (shift image by sub-patch offsets, run frozen ViT, inverse-shift and average -> pixel-dense features), then a logistic-regression classifier maps sparse user 'paint-brush' scribbles to a dense per-image segmentation. Hybrid classical+ViT features + CRF post-hoc. Validated on TEM/SEM micrographs.",
+    "applicability": "Near drop-in for your stack: you ALREADY compute DINOv2 ViT-S/14 embeddings. Instead of a U-Net trained globally on conflicting weak labels, fit a cheap per-image logreg on the pixels your blue outlines DO cover (positives) plus a few background clicks, using upsampled DINOv2 features; it generalizes to the rest of the same image. This is honest expansion of incomplete labels with NO pseudo-label-vs-dense-label conflict (the source of your v6 regression), and it degrades gracefully on the tiny/noisy val because there is nothing global to overfit. Talc being transparent in reflected light is exactly the 'similar greyscale, different structure' case their features are shown to separate.",
+    "verdict": "adopt",
+    "effort": "low"
+   },
+   {
+    "name": "vulture + interactive-seg-gui: convolutional feature upsampling for materials micrograph segmentation",
+    "kind": "code",
+    "year": "2025/2026",
+    "link": "https://arxiv.org/abs/2508.21529 (code: https://github.com/tldr-group/vulture , GUI: tldr-group/interactive-seg-gui)",
+    "license": "MIT",
+    "summary": "Same group as HR-Dv2. Trains a small conv upsampler (bisected U-Net) once on ImageNet against FeatUp/LoftUp targets to lift DINOv2 features to pixel resolution, then an XGBoost/RF/logreg on (classical + upsampled-deep) features per pixel. Reaches ~75-80% mIoU from ~20% pixels labeled in seconds; beats a U-Net (MicroNet) on sparse labels. Ships an interactive scribble GUI.",
+    "applicability": "Their OWN benchmark set includes 'reflected light microscopy (RLM) images of copper ore in epoxy resin' — literally your imaging modality and a Cu ore sample. This is the closest published analogue to your task. Use the GUI to relabel talc quickly on the darker ч2 domain, and the feature-once/retrain-fast loop makes the tiny-val, two-domain reality tractable. Concatenating classical intensity/texture filters with DINOv2 helps where talc's weak reflected-light signal needs low-level cues.",
+    "verdict": "adopt",
+    "effort": "medium"
+   },
+   {
+    "name": "DMSPS: Dynamically Mixed Soft Pseudo-label Supervision for scribble segmentation",
+    "kind": "code",
+    "year": "2024",
+    "link": "https://github.com/HiLab-git/DMSPS (Medical Image Analysis 2024)",
+    "license": "check repo (HiLab-git repos are typically permissive/for-research)",
+    "summary": "Dual-branch (main + auxiliary decoder). Trains with pCE on scribbles + SOFT pseudo-labels made by dynamically mixing the two decoders' predictions. Two-stage: stage-1 predictions are filtered by an uncertainty/confidence threshold, the confident ones EXPAND the scribbles, stage-2 retrains on the enlarged (still soft) seeds.",
+    "applicability": "This is the concrete recipe for your pain #4 (self-training regressed). Your v6 used HARD pseudo-labels that conflicted with dense regions; DMSPS keeps them SOFT and only expands where uncertainty is low, so it cannot overwrite confident dense labels. The two-stage uncertainty-filtered expansion is exactly 'how to grow the incomplete talc label honestly'. Port the loss + expansion step onto your existing U-Net rather than adopting their PyMIC/unet_cct wholesale.",
+    "verdict": "try",
+    "effort": "medium"
+   },
+   {
+    "name": "Positive-Unlabeled (PU) learning for incomplete annotation (nnPU non-negative risk; histopathology-with-incomplete-labels)",
+    "kind": "method",
+    "year": "2021-2023",
+    "link": "https://arxiv.org/abs/2302.08050 , https://arxiv.org/abs/2106.15918 , survey: https://github.com/mayonezu216/Awesome-PU-learning",
+    "license": "n/a (loss formulation)",
+    "summary": "Reframes 'only some positives are labeled, unlabeled != negative' as PU learning: use a non-negative risk estimator (nnPU) so unmarked pixels are treated as a positive/negative mixture, not hard negatives. Directly built for incomplete/partial annotation (their setting: only a subset of positive instances marked, rest is unlabeled).",
+    "applicability": "This targets the ROOT of pain #1 more principledly than partial-CE: your un-outlined talc is unlabeled, not background, so any loss that pushes unmarked pixels to 'not talc' is biased. Swapping the background term for a PU risk removes that bias. Cost: PU needs a talc prior (class fraction pi); you can estimate it from your isotonic-calibrated area fraction. Good conceptual upgrade to your current pCE+GCE.",
+    "verdict": "try",
+    "effort": "medium"
+   },
+   {
+    "name": "Tree Energy Loss (TEL): sparsely-annotated semantic segmentation",
+    "kind": "method",
+    "year": "2022",
+    "link": "https://arxiv.org/abs/2203.10739 (code: https://github.com/megvii-research/TreeEnergyLoss)",
+    "license": "Apache-2.0",
+    "summary": "Builds a minimum spanning tree over the image combining low-level (RGB) and high-level (deep feature) pairwise affinities; sequentially applies the tree filter to network logits to produce SOFT pseudo-labels for unlabeled pixels, online, coarse-to-fine. Purpose-built for point/scribble/block supervision.",
+    "applicability": "A stronger regularizer than your GatedCRF: GatedCRF is LOCAL pairwise; the MST captures GLOBAL connectivity along low-cost paths, which is what you need to propagate a thin, unclosed talc outline into a coherent region. Honestly: not drop-in — needs a CUDA tree-filter op and integration into the backbone forward pass, and its low-level term assumes color contrast that is weak for transparent talc (lean on the high-level/DINOv2-feature affinity term). Worth trying as an add-on loss beside GatedCRF.",
+    "verdict": "try",
+    "effort": "high"
+   },
+   {
+    "name": "HELPNet: hierarchical perturbation consistency + entropy-guided pseudo-labels + structural prior refinement",
+    "kind": "method",
+    "year": "2025",
+    "link": "https://arxiv.org/abs/2412.18738 (code: https://github.com/IPMI-NWU/HELPNet)",
+    "license": "check repo",
+    "summary": "Three modules: entropy-guided pseudo-label (EGPL) keeps only low-entropy/high-confidence predictions; hierarchical jigsaw-perturbation consistency for multi-scale robustness; and a Structural Prior Refinement (SPR) that injects CONNECTIVITY and BOUNDED priors into pseudo-labels. SOTA on ACDC/MSCMR/CHAOS.",
+    "applicability": "SPR's connectivity/bounded prior is a direct remedy for your unclosed blue contours — it encourages closed, connected talc regions instead of leaving open outlines. EGPL is the safe (entropy-gated) alternative to naive entropy-minimization, which would over-sharpen your noisy boundaries. Take EGPL + SPR as bolt-ons; the jigsaw consistency is optional.",
+    "verdict": "try",
+    "effort": "medium"
+   },
+   {
+    "name": "ScribbleVS: regional pseudo-label diffusion + dynamic competitive selection",
+    "kind": "method",
+    "year": "2024",
+    "link": "https://arxiv.org/abs/2411.10237",
+    "license": "check repo",
+    "summary": "Propagates labels only within local neighborhoods, guided by prediction confidence: confident pixels influence uncertain neighbors while UNRELIABLE regions are selectively IGNORED. Competitive selection picks the better of two branches' pseudo-labels.",
+    "applicability": "Directly encodes the discipline your v6 lacked: expand into uncertain areas ONLY from confident seeds, and explicitly ignore the rest rather than forcing a label. Pairs naturally with your existing DINOv2 features as the neighborhood-affinity signal. Use as the pseudo-label-diffusion policy on the unlabeled ч2 panoramas.",
+    "verdict": "try",
+    "effort": "medium"
+   },
+   {
+    "name": "Scribbles4All (S4A): universal scribble generator + cross-dataset scribble benchmark",
+    "kind": "dataset",
+    "year": "2024",
+    "link": "https://arxiv.org/abs/2408.12489 (code+data: https://github.com/wbkit/Scribbles4All)",
+    "license": "check repo (code + s4Datasets released)",
+    "summary": "NeurIPS'24. An algorithm that auto-generates realistic human-like scribbles from any DENSE mask, plus benchmark datasets and baselines. Models trained on synthetic scribbles match models trained on manual ones.",
+    "applicability": "Two uses for you: (1) from your few DENSE talc masks, synthesize many realistic scribble variants to pretrain/stress-test your scribble pipeline and enlarge your tiny 8-image val signal; (2) it is a controlled testbed to decide WHICH scribble method (DMSPS vs TEL vs HELPNet) wins before you invest in porting one. Not a talc dataset, so it's a tooling/benchmark aid, not a data source.",
+    "verdict": "try",
+    "effort": "low"
+   },
+   {
+    "name": "ScribFormer: CNN+Transformer+ACAM triple-branch scribble segmentation",
+    "kind": "method",
+    "year": "2024",
+    "link": "https://arxiv.org/abs/2402.02029 (code: https://github.com/HUANGLIZI/ScribFormer , IEEE TMI 2024)",
+    "license": "check repo",
+    "summary": "Fuses CNN local features with a Transformer global branch, plus an attention-guided CAM branch, to recover global shape from very limited scribbles; beats prior scribble methods and even some fully-supervised baselines on cardiac MRI.",
+    "applicability": "Relevant because talc's per-pixel reflected-light signal is weak/transparent, so global shape context matters more than local intensity — the Transformer branch supplies that. But it's a full architecture (not a bolt-on) and cardiac-tuned; treat as an alternative segmenter to benchmark against your U-Net, not a first move. The ACAM branch overlaps with your existing image-level talc-vote idea.",
+    "verdict": "reference",
+    "effort": "medium"
+   },
+   {
+    "name": "Class-driven Scribble Promotion Network (Scribble Hides Class)",
+    "kind": "method",
+    "year": "2024",
+    "link": "https://arxiv.org/abs/2402.17555 (code: https://github.com/Zxl19990529/Class-driven-Scribble-Promotion-Network , AAAI 2024)",
+    "license": "check repo",
+    "summary": "Fuses IMAGE-LEVEL class labels with scribbles: a localization-rectification module corrects foreground features, and a distance-entropy loss reduces uncertainty using image-level semantics + pseudo-labels.",
+    "applicability": "You already have an image-level talc-vote (DINOv2+LogReg). This paper is the principled way to inject that image-level signal into the pixel segmentation loss — use the vote to gate/weight talc pseudo-labels and suppress talc predictions on images the vote calls non-talc. The distance-entropy loss is a gentler regularizer than plain entropy-min. Good design pattern to copy even if you don't port the whole net.",
+    "verdict": "reference",
+    "effort": "medium"
+   },
+   {
+    "name": "Feature upsamplers: FeatUp / LoftUp / AnyUp (DINOv2 -> pixel-dense features)",
+    "kind": "method",
+    "year": "2024-2025",
+    "link": "LoftUp https://arxiv.org/abs/2504.14032 , AnyUp https://arxiv.org/abs/2510.12764 , FeatUp (ICLR'24)",
+    "license": "mixed (FeatUp/LoftUp have permissive repos; check each)",
+    "summary": "Learned upsamplers that turn low-res (stride-14) DINOv2 patch features into pixel-resolution feature maps: FeatUp (image-adaptive, x16), LoftUp (cross-attention coordinate-based, arbitrary res), AnyUp (feature-agnostic/universal). These are the enabling component behind HR-Dv2/vulture.",
+    "applicability": "The critical missing piece if you want to classify TALC PER PIXEL from your ViT-S/14 features: raw DINOv2 patches are 14x coarse and will smear thin talc rims. Upsample first, then run your logreg/U-Net decoder on dense features. AnyUp is attractive because it is backbone-agnostic (works if you later swap DINOv2->DINOv3/Franca). Adopt one as a preprocessing block for the HR-Dv2-style pipeline.",
+    "verdict": "try",
+    "effort": "medium"
+   },
+   {
+    "name": "Classic seed-expansion baselines: Deep Seeded Region Growing (DSRG) + AffinityNet random-walk (PSA)",
+    "kind": "method",
+    "year": "2018",
+    "link": "DSRG https://github.com/speedinghzl/DSRG , AffinityNet https://arxiv.org/abs/1803.10464",
+    "license": "DSRG repo (research); PSA MIT",
+    "summary": "DSRG grows seed labels through deep-feature similarity with a balanced seeding loss that IGNORES un-grown pixels; AffinityNet learns pixel affinities and expands seeds by random walk. Both are the ancestors of TEL/SPARK-style affinity expansion.",
+    "applicability": "Conceptually load-bearing for you even though the code is old (Caffe/DeepLabv2, CAM-seeded). The reusable ideas: (a) DSRG's balanced seeding loss = the correct IGNORE-region formulation for un-outlined pixels; (b) region-grow / random-walk your thin talc scribbles across DINOv2-feature affinity to fill regions. Reimplement the idea on your features rather than running the legacy repos.",
+    "verdict": "reference",
+    "effort": "medium"
+   },
+   {
+    "name": "Label refinement for noisy scribble annotation (clean/noisy separation + high-confidence refinement)",
+    "kind": "paper",
+    "year": "2024",
+    "link": "https://hbil.bme.columbia.edu/sites/hbil.bme.columbia.edu/files/content/manuscripts/2024/Label%20refinement%20for%20noisy%20annotation%20in%20weakly%20supervised%20segmentation.pdf ; also 'Noisy Annotations in Semantic Segmentation' https://arxiv.org/abs/2406.10891",
+    "license": "n/a",
+    "summary": "Two-step: (1) train robustly under label noise while separating likely-clean from likely-noisy labeled pixels; (2) relabel the noisy ones from the robust model's high-confidence predictions.",
+    "applicability": "This is the fix for the false-positive SULFIDES inside your blue contours (label noise INSIDE positives). Combine with a domain shortcut you already have: subtract your LAB sulfide segmentation from the talc seed region so known sulfide pixels are carved OUT before training — cheaper and more reliable than learning to detect the noise. Use the paper's refinement loop only for residual noise. Keep your GCE (q=0.7) as the robust base loss.",
+    "verdict": "reference",
+    "effort": "medium"
+   },
+   {
+    "name": "PLESS: Pseudo-Label Enhancement with Spreading Scribbles",
+    "kind": "paper",
+    "year": "2026",
+    "link": "https://arxiv.org/abs/2602.11628",
+    "license": "n/a",
+    "summary": "Weakly-supervised segmentation that SPREADS scribbles into enhanced pseudo-labels and is reported to reduce false-positive segmentations and improve robustness in ambiguous cases.",
+    "applicability": "Matches two of your pains at once — unclosed/thin scribbles (spreading) and false positives (their headline metric). Very recent, so treat as a lead to watch and mine for the spreading mechanism rather than a stable dependency; verify code exists before committing.",
+    "verdict": "reference",
+    "effort": "low"
+   }
+  ],
+  "top_recommendations": [
+   "ADOPT the tldr-group DINOv2-upsampling + sparse-scribble-classifier pipeline (HR-Dv2, arXiv 2410.19836; vulture, arXiv 2508.21529; both MIT). It is the closest published analogue to your task — same group benchmarks it on REFLECTED-LIGHT copper-ore-in-epoxy micrographs — reuses the DINOv2 you already run, expands your partial blue talc outlines to dense per-image masks via a cheap logreg/XGBoost, and structurally CANNOT reproduce the v6 self-training regression because there is no global model overwriting your dense labels. Add a feature upsampler (FeatUp/LoftUp/AnyUp) so ViT-S/14 patches resolve thin talc rims. Lowest effort, highest fit.",
+   "FIX the incomplete-label bias at the loss level: treat un-outlined pixels as UNLABELED, not background. Use partial-CE with a proper IGNORE band around each unclosed contour, and upgrade the background term to a Positive-Unlabeled (nnPU) risk (arXiv 2302.08050) using a talc class-prior estimated from your isotonic-calibrated area fraction. Separately, carve KNOWN sulfide pixels (from your existing LAB segmentation) OUT of the talc positive seeds to kill the false-positives-inside-the-contour noise before training.",
+   "REPLACE naive self-training with uncertainty-GATED SOFT pseudo-labels, DMSPS-style (github.com/HiLab-git/DMSPS): two-stage, expand scribbles only where confidence is high, keep pseudo-labels soft, and IGNORE uncertain regions (ScribbleVS regional diffusion). This is the specific recipe that avoids your v6 conflict. Avoid plain entropy-minimization — it over-sharpens noisy talc boundaries; use entropy only to GATE (HELPNet EGPL), not as a training objective.",
+   "ADD a global-affinity regularizer beyond GatedCRF to propagate thin talc scribbles into coherent, CLOSED regions: Tree Energy Loss (MST low+high-level affinity, Apache-2.0) as an extra loss leaning on its DINOv2-feature term (color contrast is weak for transparent talc), and/or HELPNet's connectivity/bounded Structural-Prior-Refinement to close the open blue outlines.",
+   "USE Scribbles4All (NeurIPS'24, github.com/wbkit/Scribbles4All) to synthesize realistic scribbles from your few DENSE talc masks — this both enlarges the training/validation signal beyond your unstable 8-image val and gives you a controlled testbed to pick the winning scribble method (DMSPS vs TEL vs HELPNet) before investing in a full port."
+  ]
+ },
+ {
+  "angle": "PU-learning (positive-unlabeled) and partial/incomplete-annotation learning for the talc-segmentation pain: our blue contours mark only PART of the talc, so \"background\" pixels are unlabeled positives. The correct framing is not \"noisy background\" but PU: inside-contour = Positive, everything else = Unlabeled (mix of talc + non-talc), NOT hard Negative. This changes both the loss (stop punishing the model for finding unlabeled talc) and the evaluation (our val MAE is partly not error but unlabeled-positive prevalence bias — a quantification/class-prior-estimation problem, not a segmentation-accuracy problem). Two concrete gains are available with low effort: (1) swap talc pCE for an nnPU / class-prior-free PU loss so out-of-contour talc is treated as unlabeled, not negative; (2) re-estimate the true talc area fraction with a quantifier / class-prior estimator instead of raw classify-and-count, which both improves the GOST >10% decision and partially dissolves the \"MAE\" that is really unlabeled talc. This also cleanly explains why the v6 self-training regressed: pseudo-completion of unlabeled pixels conflicts with the (partial) dense labels — PU's principled non-negative risk avoids exactly that failure.",
+  "findings": [
+   {
+    "name": "nnPU non-negative risk estimator (Kiryo et al.)",
+    "kind": "method",
+    "year": "2017",
+    "link": "https://arxiv.org/abs/1703.00593",
+    "license": "code: kiryor/nnPUlearning (MIT, Chainer); cimeister/pu-learning (PyTorch, loss.py has uPU+nnPU)",
+    "summary": "Foundational PU loss: R = pi*R_P(+1) + max{0, R_U(-1) - pi*R_P(-1)}. The max{0,...} clamp prevents the flexible CNN from overfitting the (partly-positive) unlabeled set to 'negative'. Requires a positive class-prior pi.",
+    "applicability": "Direct drop-in for our talc head: inside-contour pixels = Positive, ALL other pixels = Unlabeled (not Negative). This stops the loss from penalizing the model when it fires on the many out-of-contour talc regions — the core of our incomplete-label pain. Replaces/augments our pCE term. PyTorch loss is ~40 lines. Needs pi (talc fraction), see class-prior/self-prior entries.",
+    "verdict": "adopt",
+    "effort": "low"
+   },
+   {
+    "name": "Lejeune & Sznitman — Positive/Unlabeled segmentation from point-wise supervision (self-supervised prior)",
+    "kind": "code",
+    "year": "2021",
+    "link": "https://arxiv.org/abs/2107.08394 ; code https://github.com/lejeunel/ssnnpu_ksptrack",
+    "license": "GPL-3.0",
+    "summary": "Media 2021. Trains segmentation from SPARSE positive annotations using the nnPU risk estimator, and — key — a self-supervised recursive-Bayesian scheme that ESTIMATES the positive prior during training instead of assuming it known, with a principled stopping criterion. Validated on surgical tools, slitlamp video, brain MRI, inner-ear CT.",
+    "applicability": "Closest full recipe to our situation: our contours are sparse/partial positives and we do NOT know the true talc fraction. Their self-supervised prior estimator is exactly what we need to (a) feed pi to the nnPU loss per-image/per-domain and (b) recover the TRUE talc fraction — which is our GOST decision variable and the thing our 'MAE' is really measuring. GPL-3.0 constrains redistribution but is fine for internal training. Adapt the loss+prior module, drop KSP tracking (video-specific).",
+    "verdict": "adopt",
+    "effort": "high"
+   },
+   {
+    "name": "ShapePU — EM class-proportion estimation + PU loss + global consistency",
+    "kind": "code",
+    "year": "2022",
+    "link": "https://arxiv.org/abs/2206.02118 ; code https://github.com/BWGZK/ShapePU",
+    "license": "No LICENSE file in repo (all-rights-reserved by default) — treat code as reference, method is reproducible; PyTorch, torch 1.7",
+    "summary": "MICCAI 2022, scribble-supervised. EM algorithm estimates the proportion of each class among UNLABELED pixels, then 'marginal probability maximization' assigns unlabeled pixels; adds global consistency by cutout + penalizing inconsistent predictions. Beat fully-supervised by 1.4/9.8% Dice on ACDC/MSCMR. estimator.py is the reusable piece.",
+    "applicability": "Multi-class version of what we need (sulfides/gray/talc). The EM proportion estimator directly models 'background contains unlabeled talc' as a mixture and yields per-class fractions = our doля estimates. Global-consistency cutout is a stronger cousin of our GatedCRF/multi-scale. Because there's no license, port the algorithm (EM + marginal-max) rather than copying files.",
+    "verdict": "try",
+    "effort": "medium"
+   },
+   {
+    "name": "T-HOneCls — Class-prior-FREE PU with Taylor Variational Loss (hyperspectral pixel classification)",
+    "kind": "code",
+    "year": "2023",
+    "link": "https://arxiv.org/abs/2308.15081 ; code https://github.com/Hengwei-Zhao96/T-HOneCls (also HOneCls)",
+    "license": "Not stated on repo landing (verify before reuse) — ICCV 2023",
+    "summary": "PU pixel classifier that needs NO known class-prior. Taylor-series expansion down-weights the gradient of unlabeled data to balance over/under-fitting, plus a self-calibrated optimization strategy to stabilize training. Built for remote-sensing pixel (one-class-from-P+U) classification.",
+    "applicability": "Strong fit for two of our specifics: (1) the talc prior is unknown AND shifts across the olive/dark domains and across images — class-prior-free removes our dependence on a fixed pi; (2) it is a pixel-level RS method, same shape as our task. Use as the talc PU head where estimating pi is unreliable. Verify license before shipping code; method is re-implementable.",
+    "verdict": "try",
+    "effort": "medium"
+   },
+   {
+    "name": "PU Learning with Field-of-View Consistency for Histology segmentation",
+    "kind": "paper",
+    "year": "2024",
+    "link": "https://link.springer.com/chapter/10.1007/978-981-99-9342-0_14 ; code https://github.com/lzaya/PU_with_FoV",
+    "license": "check repo (unspecified)",
+    "summary": "FC 2023. Trains microscopy segmentation with only a FRACTION of positives labeled: using 20% of positive labels on GlaS reaches Dice 90.69 vs 93.30 fully-supervised. Reduces PU label noise by enforcing prediction consistency across varying fields of view.",
+    "applicability": "Closest DOMAIN evidence (optical microscopy, exactly 'only part of positives labeled') that PU recovers near-full performance from partial positives — de-risks the whole direction for us. FoV-consistency (predictions stable across crops/scales) is directly portable and complements the two-domain shift problem. Use as proof-of-concept + borrow the consistency regularizer.",
+    "verdict": "try",
+    "effort": "medium"
+   },
+   {
+    "name": "Quantification learning / QuaPy (prevalence estimation) for the talc-fraction head",
+    "kind": "code",
+    "year": "2021",
+    "link": "https://arxiv.org/abs/2106.11057 ; https://github.com/HLT-ISTI/QuaPy ; PUPE: https://arxiv.org/abs/2004.10356",
+    "license": "QuaPy: BSD-3-Clause (pip install quapy)",
+    "summary": "Quantification = estimate class prevalence in an unlabeled sample, correcting the systematic bias of naive classify-and-count (ACC/PACC, EMQ/SLD, HDy, SPA). 'Quantifying With Only Positive Training Data' shows the PU special case (PUPE). Mature Python library.",
+    "applicability": "Re-frames our doля-талька / MAE head. Right now we classify pixels and count, then isotonic-calibrate; a quantifier is the principled version and directly corrects prevalence bias. Critically, it separates 'model error' from 'true prevalence' — much of our 10.2 pp val MAE is the gap between the INCOMPLETE-label fraction and the TRUE fraction, i.e. unlabeled talc, not model error. Report both classifier-count and quantifier estimate; use the latter for the GOST >10% rule.",
+    "verdict": "adopt",
+    "effort": "medium"
+   },
+   {
+    "name": "Class-prior / mixture-proportion estimation (KM2, TIcE, DEDPUL, PULSNAR, Rethinking-CPE)",
+    "kind": "method",
+    "year": "2020",
+    "link": "https://arxiv.org/abs/2002.03673 ; PULSNAR https://arxiv.org/abs/2303.08269",
+    "license": "various (DEDPUL: dimonenka/DEDPUL MIT; TIcE: open)",
+    "summary": "Estimate the positive class-prior pi from Positive + Unlabeled data alone (kernel-mean KM1/KM2, AlphaMax, tree-induced TIcE, density-ratio DEDPUL; PULSNAR handles selected-not-at-random labeling). Ill-posed without an anchor/irreducibility assumption, so pair with a decision-margin or high-purity positive set.",
+    "applicability": "Two payoffs: (1) supplies pi to the nnPU loss when not using a class-prior-free variant; (2) an INDEPENDENT estimate of the true talc area fraction that quantifies how much of our MAE is unlabeled talc vs real error — turns pain #1/#3 into a measurable number on the tiny val set. PULSNAR's selected-not-at-random matches our reality (labelers drew contours non-randomly, skipping obvious/small talc).",
+    "verdict": "try",
+    "effort": "medium"
+   },
+   {
+    "name": "OOD-SEG — multi-class segmentation from sparse positive-only annotations (PU + OOD)",
+    "kind": "paper",
+    "year": "2024",
+    "link": "https://arxiv.org/abs/2411.09553",
+    "license": "paper CC-BY-4.0; code availability not confirmed",
+    "summary": "Medical Image Analysis. Casts multi-class segmentation from sparse positive-ONLY labels as PU, treating unlabeled/background as out-of-distribution and applying pixel-level OOD detection. Introduces a cross-validation protocol that holds out labeled classes as pseudo-OOD to evaluate WITHOUT a dedicated OOD set.",
+    "applicability": "Matches our multi-phase positive-only setup (sulfide/gray/talc each only partially marked). The held-out-class CV evaluation is a concrete idea for our pain #3 (tiny, noisy val=8): estimate reliability without more labels. Also lets unseen phases be flagged as OOD rather than force-assigned. Code presence unconfirmed — treat as design guidance.",
+    "verdict": "reference",
+    "effort": "high"
+   },
+   {
+    "name": "3D-BoxSup — PU learning of segmentation from bounding boxes",
+    "kind": "paper",
+    "year": "2019",
+    "link": "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC7199456/",
+    "summary": "Trains segmentation where a box INTERIOR is treated as Unlabeled (mix of target + non-target) and only the exterior as Negative, using a PU-style objective — instead of naively labeling the whole box as positive.",
+    "applicability": "Directly addresses our specific noise: blue contour outlines behave like loose boxes and often ENCLOSE sulfides (false positives in the label). The BoxSup insight — treat the interior of a weak region as Unlabeled, not Positive — tells us to down-weight/soft-label inside-contour pixels rather than trust them, mitigating the 'sulfide inside contour' problem in pain #1.",
+    "verdict": "reference",
+    "effort": "medium"
+   },
+   {
+    "name": "Loss-masking / ignore-label vs pseudo-completion (Embracing Imperfect Datasets; Mask the Unknown)",
+    "kind": "paper",
+    "year": "2024",
+    "link": "https://arxiv.org/abs/1908.10454 ; https://arxiv.org/abs/2406.14365",
+    "license": "Mask-the-Unknown: CC-BY-4.0, code on GitLab",
+    "summary": "Taxonomy + empirical comparison for incomplete masks: (a) loss-masking / ignore uncertain pixels so only trusted labels drive gradients, vs (b) pseudo-completing the missing labels. Practical finding: masking is safe; naive pseudo-completion can hurt, and including ALL visible instances of a class (not just a target subset) helps.",
+    "applicability": "Explains and fixes two of our pains at low cost. Cheapest immediate fix short of full PU: mask the ambiguous 'background' out of the NEGATIVE talc loss (ignore-label) so partial contours don't teach 'no talc here'. It also diagnoses why v6 self-training regressed (18.8 vs 10.2): that was pseudo-completion, which the literature flags as the fragile option that conflicts with existing dense labels — PU's non-negative risk is the robust alternative.",
+    "verdict": "adopt",
+    "effort": "low"
+   },
+   {
+    "name": "Asymmetric / robust PU losses for NOISY positives (aPU, imbalanced PU)",
+    "kind": "method",
+    "year": "2021",
+    "link": "https://ieeexplore.ieee.org/document/9428350 ; imbalanced-PU https://arxiv.org/abs/2209.02459",
+    "summary": "Variants of the PU risk that tolerate label noise in the positive set and class imbalance (asymmetric loss weighting; self-supervised imbalanced PU). Address the case where even 'Positive' labels are contaminated.",
+    "applicability": "Our positives are themselves noisy (sulfides inside the blue contour = false positives in P) and talc is a minority phase — so a plain nnPU may still trust bad positives. If a first nnPU pass shows positive-noise sensitivity, upgrade to an asymmetric/robust PU loss; combine with our existing GCE (q=0.7) intuition, which already targets label noise. Second-stage refinement, not first thing to try.",
+    "verdict": "reference",
+    "effort": "medium"
+   },
+   {
+    "name": "Awesome-PU-learning (curated survey + medical-imaging index)",
+    "kind": "code",
+    "year": "2023",
+    "link": "https://github.com/beidiz/Awesome-PU-learning",
+    "summary": "Curated list of PU-learning surveys, top-venue papers, and medical-imaging applications with code links.",
+    "applicability": "Entry point to keep the PU search current and find any newer 2025-26 PU-segmentation methods beyond this pass. Low value on its own; use as a lookup index while implementing.",
+    "verdict": "reference",
+    "effort": "low"
+   }
+  ],
+  "top_recommendations": [
+   "Reframe the talc head as PU, not noisy-segmentation: inside-contour = Positive, everything else = Unlabeled (NOT Negative). Concretely, either (a) add an ignore-mask so out-of-contour pixels never contribute a 'negative talc' gradient (lowest effort, do first), or (b) replace pCE with an nnPU loss (cimeister/pu-learning PyTorch, ~40 lines). This is the direct fix for pain #1 and it also explains the v6 self-training regression — that was pseudo-completion, the fragile option; PU's non-negative risk is the robust one.",
+   "Get pi (talc prior) without hand-tuning: use a class-prior-FREE PU loss (T-HOneCls, ICCV 2023, pixel/RS domain, github Hengwei-Zhao96/T-HOneCls) OR estimate pi per-image with the self-supervised recursive-Bayes scheme from Lejeune & Sznitman (Media 2021, github lejeunel/ssnnpu_ksptrack, GPL-3.0). Class-prior-free is preferable because the talc fraction shifts across the olive/dark domains.",
+   "Fix the MAE interpretation with quantification. Our val MAE (10.2 pp) is partly NOT model error — it's the gap between the incomplete-label fraction and the true talc fraction (unlabeled positives). Estimate the true fraction with a quantifier (QuaPy, BSD-3, pip) or a class-prior/MPE estimator (TIcE/DEDPUL/PULSNAR) and report classifier-count vs quantifier-corrected side by side; use the corrected value for the GOST >10% rule. PULSNAR's selected-not-at-random model matches labelers skipping obvious/small talc.",
+   "Borrow ShapePU's EM class-proportion estimator (MICCAI 2022, estimator.py) to model 'background = mixture of talc + non-talc' and emit per-phase fractions directly — but reimplement it, the repo has no license. Pair with FoV/cutout consistency (PU_with_FoV histology; ShapePU global consistency) which is the closest microscopy evidence that PU recovers ~full Dice from only ~20% of positives and also helps the two-domain shift (pain #5).",
+   "For the 'sulfides inside the contour' label noise (false positives in P), adopt the 3D-BoxSup insight: treat the contour INTERIOR as Unlabeled/soft rather than trusted Positive, and if nnPU proves sensitive to positive-noise, upgrade to an asymmetric/robust PU loss. Use the tiny val more honestly via OOD-SEG's held-out-class cross-validation trick to estimate reliability without new labels (pain #3)."
+  ]
+ },
+ {
+  "angle": "SEMI-SUPERVISED сегментация талька «правильно»: почему self-training (v6) дал регрессию и конкретный рецепт-замена.\n\n== ДИАГНОЗ: почему v6 упал (18.8 vs 10.2 MAE) ==\nВаш v6 = ОФФЛАЙН self-training одной моделью с ВЛИВАНИЕМ псевдометок в обучающий набор. Это худший из возможных SSL-режимов для вашей задачи и попадает сразу в три ловушки, которые в литературе описаны как причина деградации:\n1) Confirmation bias (Arazo 2019, 1908.02983): модель переобучается на СОБСТВЕННЫХ ошибках. Тальк ПРОЗРАЧЕН в отражённом свете и РЕДОК -> модель на неразмеченном тёмном домене (ч2) предсказывает «талька нет» -> псевдометки = сплошной фон -> при дообучении это «нет талька» закрепляется. Это ровно long-tailed pseudo-label bias, который чинит DARS (2107.11279): без выравнивания распределения редкий класс исчезает.\n2) Конфликт плотной разметки с псевдометками (ваша боль #4): когда псевдо-пиксели (99% фон) вливаются в один набор с 8 плотно-размеченными снимками, хороший редкий сигнал ТОНЕТ численно -> катастрофическое забывание положительного класса. Это НЕ надо чинить «лучшими псевдометками» — надо архитектурно РАЗДЕЛИТЬ supervised и unsupervised лоссы.\n3) Стейл-псевдометки без онлайн-учителя, без порога уверенности, без strong-aug decoupling -> низкое качество и накопление ошибки.\n\n== ГЛАВНЫЙ СДВИГ ПАРАДИГМЫ ==\nУйти от ОФФЛАЙН self-training к ОНЛАЙН weak-to-strong consistency (FixMatch/UniMatch). Псевдометки НИКОГДА не вливаются в набор меток — они используются ТОЛЬКО как consistency-цель на неразмеченных данных со strong-аугментацией, а плотный supervised-лосс (ваш pCE+GCE q=0.7+GatedCRF) считается КАЖДУЮ итерацию на 8 размеченных = встроенный rehearsal, дозирующий забывание. UniMatch V2 показывает, что именно DINOv2-энкодер (у вас уже ViT-S/14!) с weak-to-strong даёт SOTA даже в режиме 1/16 меток и обгоняет ResNet-101 при 2x меньше параметров — это ваш прямой апгрейд, а не новая ветка.\n\n== КОНКРЕТНЫЙ РЕЦЕПТ (замена v6), PyTorch training-step ==\nКлючевые отличия от v6 помечены (a)-(f).\n\nimport math, torch\nfrom copy import deepcopy\nimport torch.nn.functional as F\n\nstudent = UNet(encoder='dinov2_vits14', n_cls=3)   # ваш энкодер petroscope/LumenStone тоже ок\nteacher = deepcopy(student)                          # (c) Mean-Teacher: стабильные псевдометки\nfor p in teacher.parameters(): p.requires_grad_(False)\n\ntau      = torch.tensor([0.75, 0.75, 0.50])   # (d) талёк [sulfide,gangue,talc]: порог ниже для редкого класса\nema_conf = torch.zeros(3)\n\ndef strong_aug(x):                             # (e) применяем ТОЛЬКО к student-виду неразмеченных\n    x = color_jitter(x, 0.4,0.4,0.4,0.1)       #     цвет-джиттер СШИВАЕТ оливковый(ч1)/тёмный(ч2) домены\n    x = random_grayscale(x, p=0.2)\n    return x\n\ndef rampup(step, length):                      # (f) MeanTeacher/UniMatch warmup для lambda\n    if step >= length: return 1.0\n    p = 1.0 - step/length\n    return math.exp(-5.0*p*p)\n\nfor step,(lab, unl) in enumerate(zip(loader_L, loader_U)):\n    xL, yL, ann = lab            # yL слабая/неполная; ann = маска пикселей, которые РЕАЛЬНО размечены\n    xU_w        = unl            # слабый вид: только resize/flip\n    xU_s        = strong_aug(cutmix(xU_w))    # (e) сильный вид: CutMix (French 2019) + цвет\n\n    # ---- (b) SUPERVISED каждую итерацию = REHEARSAL: плотный сигнал не забывается ----\n    lg_L  = student(xL)\n    L_sup = pce(lg_L, yL, ann) + 0.5*gce(lg_L, yL, ann, q=0.7) + 0.1*gated_crf(lg_L, xL)\n\n    # ---- (a) UNSUPERVISED weak->strong consistency (псевдометки НЕ вливаются в набор) ----\n    with torch.no_grad():\n        p_t     = teacher(xU_w).softmax(1)     # (c) EMA-учитель = стабильная цель, рвёт петлю самоусиления\n        conf,pl = p_t.max(1)\n    thr  = tau.to(pl.device)[pl]               # (d) порог зависит от предсказанного класса\n    keep = conf.ge(thr).float()                #     фильтрация неуверенных (FixMatch)\n    for c in range(3):                         # (d) FreeMatch SAT: EMA уверенности -> адаптивный порог\n        m = (pl==c)\n        if m.any(): ema_conf[c] = 0.999*ema_conf[c] + 0.001*conf[m].mean().item()\n    tau = 0.7 * ema_conf / ema_conf.max().clamp(min=1e-6)   # редкий тальк автоматически «отпускается»\n\n    lg_s  = student(xU_s)                       # student на сильном виде\n    lg_fp = student(xU_w, feat_dropout=0.5)     # UniMatch dual-stream: доп. feature-perturbation\n    L_uns = (F.cross_entropy(lg_s , pl, reduction='none')*keep).mean() \\\n          + (F.cross_entropy(lg_fp, pl, reduction='none')*keep).mean()\n\n    lam  = rampup(step, warmup_steps)           # (f) 0->1: ранние шумные псевдометки не отравляют\n    (L_sup + lam*L_uns).backward(); opt.step(); opt.zero_grad()\n\n    with torch.no_grad():                       # (c) EMA-обновление учителя\n        a = min(1 - 1/(step+1), 0.999)\n        for tp,sp in zip(teacher.parameters(), student.parameters()):\n            tp.mul_(a).add_(sp, alpha=1-a)\n\nДВА ЗАЩИТНЫХ ДОБАВЛЕНИЯ под ваши боли:\n* DARS-страховка от коллапса редкого класса: если доля пикселей, помеченных «тальк» по неразмеченному батчу, падает СИЛЬНО ниже label-prior талька -> ещё понижаем порог талька (distribution alignment). Прямо бьёт по причине регрессии v6.\n* Отбор чекпойнта: НЕ по pixel-IoU, а по вашей изотонически-калиброванной area-MAE на 8-снимковом val (ваша целевая метрика). При крошечном шумном val (боль #3) держите EMA-учителя как финальную модель — он менее дёрганый.\n\n== ПОЧЕМУ ЭТО СРАБОТАЕТ ТАМ, ГДЕ v6 УПАЛ ==\n- rehearsal (b) + разделённые лоссы -> плотная слабая разметка не тонет в фоне (чинит конфликт #4);\n- EMA-учитель (c) + ramp-up (f) + порог (d) -> рвут петлю confirmation bias;\n- классово-сбалансированный/адаптивный порог + DARS-страховка -> прозрачный редкий тальк не схлопывается в фон (чинит #1,#2);\n- цвет-джиттер/CutMix (e) -> consistency становится доменно-устойчивой, лечит domain shift ч1/ч2 (#5) БЕЗ отдельного шага.\n\n== ЕСЛИ хочется сохранить оффлайн self-training ==\nЕдинственный оффлайн-вариант, который обычно НЕ регрессирует — ST++ (2106.05095): отбирать НАДЁЖНЫЕ неразмеченные снимки по стабильности предсказаний между чекпойнтами и переобучать только на них, + strong-aug. Но онлайн-consistency выше по потолку и проще под ваш U-Net.",
+  "findings": [
+   {
+    "name": "UniMatch V2 (DINOv2 weak-to-strong consistency)",
+    "kind": "method",
+    "year": "2024/2025",
+    "link": "https://github.com/LiheYoung/UniMatch-V2",
+    "license": "MIT",
+    "summary": "Онлайн weak-to-strong consistency поверх DINOv2-энкодера + Complementary Dropout, объединяет image- и feature-level аугментации в один learnable stream. Supervised-лосс на размеченных и consistency-лосс на неразмеченных считаются РАЗДЕЛЬНО и суммируются — псевдометки не вливаются в набор.",
+    "applicability": "Прямой апгрейд вашего стека: вы УЖЕ используете DINOv2 ViT-S/14. В докладе DINOv2-S (24.8M) обгоняет фреймворки на ResNet-101/MiT-B5 и сильна в режиме мало-меток (1/16 split), то есть подходит к вашим 8 плотным снимкам талька. Заменяет провальный оффлайн self-training целиком; разделение лоссов лечит конфликт псевдометок с плотной разметкой.",
+    "verdict": "adopt",
+    "effort": "medium"
+   },
+   {
+    "name": "UniMatch V1 (Revisiting Weak-to-Strong Consistency)",
+    "kind": "code",
+    "year": "2023",
+    "link": "https://github.com/LiheYoung/UniMatch",
+    "license": "MIT",
+    "summary": "CVPR2023. Dual-stream: сильная image-аугментация + feature-perturbation (channel dropout) в одном пайплайне; L_sup + L_unsup суммируются; порог уверенности для псевдометок; в комплекте эталонные реализации FixMatch-seg и supervised-бейзлайна.",
+    "applicability": "Готовый, читаемый каркас, на котором строится приведённый рецепт (dual-stream + EMA). Легче адаптировать под ваш U-Net, чем V2. Реализация FixMatch-seg внутри — референс для онлайн-consistency вместо оффлайн self-training.",
+    "verdict": "adopt",
+    "effort": "medium"
+   },
+   {
+    "name": "FixMatch weak-to-strong consistency (для сегментации)",
+    "kind": "method",
+    "year": "2020",
+    "link": "https://arxiv.org/abs/2001.07685",
+    "license": "n/a (paper)",
+    "summary": "Базовый принцип: псевдометка берётся с СЛАБО аугментированного вида, применяется как цель к СИЛЬНО аугментированному; порог уверенности отсекает шумные пиксели. Псевдометки — только consistency-цель, не добавляются в набор меток.",
+    "applicability": "Концептуальная суть замены вашего оффлайн self-training. Порог уверенности + strong-aug decoupling — именно то, чего не было в v6 и что предотвращает накопление ошибки.",
+    "verdict": "adopt",
+    "effort": "low"
+   },
+   {
+    "name": "Mean Teacher (EMA-учитель)",
+    "kind": "method",
+    "year": "2017",
+    "link": "https://arxiv.org/abs/1703.01780",
+    "license": "n/a (paper)",
+    "summary": "Учитель = экспоненциальное скользящее среднее весов студента (alpha 0.99-0.999); даёт стабильные псевдометки и разрывает петлю самоусиления одной модели.",
+    "applicability": "Ключевой компонент рецепта: v6 генерировал псевдометки той же моделью, что и обучалась -> петля confirmation bias. EMA-учитель её рвёт и стабилизирует метки при вашем крошечном шумном val (#3). Финальную модель разумно брать = учитель.",
+    "verdict": "adopt",
+    "effort": "low"
+   },
+   {
+    "name": "DARS: Re-distributing Biased Pseudo Labels",
+    "kind": "paper",
+    "year": "2021",
+    "link": "https://github.com/CVMI-Lab/DARS",
+    "license": "Apache-2.0",
+    "summary": "ICCV2021. Диагноз: при long-tailed классах псевдометки смещаются к мажоритарным классам. Distribution Alignment выравнивает распределение псевдометок под оценённое по размеченным данным + per-class пороги + random sampling.",
+    "applicability": "Прямо про вашу боль: тальк редкий/прозрачный -> схлопывается в фон (главная причина регрессии v6). Из этого — «DARS-страховка» в рецепте: если доля псевдо-талька падает ниже label-prior, понижать порог талька. Идею взять, полный код тяжеловат.",
+    "verdict": "adopt",
+    "effort": "medium"
+   },
+   {
+    "name": "FreeMatch: Self-adaptive Thresholding (SAT)",
+    "kind": "method",
+    "year": "2023",
+    "link": "https://arxiv.org/abs/2205.07246",
+    "license": "unverified (репо Semilearn/USB — MIT)",
+    "summary": "ICLR2023. Глобальный и КЛАССОВЫЙ порог уверенности адаптируются по EMA статистики предсказаний; class-fairness регуляризация против схлопывания в мажоритарный класс на раннем этапе.",
+    "applicability": "Даёт адаптивный порог для талька без ручного подбора: редкий класс автоматически «отпускается» (пониженный порог), что и реализовано в блоке tau рецепта. Лечит суппрессию редкого прозрачного талька.",
+    "verdict": "try",
+    "effort": "medium"
+   },
+   {
+    "name": "CutMix-Seg (strong varied perturbations)",
+    "kind": "code",
+    "year": "2019",
+    "link": "https://github.com/Britefury/cutmix-semisup-seg",
+    "license": "unverified (проверить репо)",
+    "summary": "French 2019: SSL-сегментации нужны СИЛЬНЫЕ разнообразные возмущения; CutMix/CutOut между неразмеченными изображениями + Mean Teacher consistency. Есть отдельный ноутбук про цвет-аугментацию.",
+    "applicability": "Источник сильной аугментации в рецепте (CutMix + цвет-джиттер). Цвет-аугментация здесь особенно ценна: она СШИВАЕТ оливковый(ч1) и тёмный(ч2) домены (#5), делая consistency доменно-устойчивой без отдельного domain-adaptation шага.",
+    "verdict": "adopt",
+    "effort": "low"
+   },
+   {
+    "name": "CPS: Cross Pseudo Supervision (TorchSemiSeg)",
+    "kind": "code",
+    "year": "2021",
+    "link": "https://github.com/charlesCXK/TorchSemiSeg",
+    "license": "unverified (проверить репо)",
+    "summary": "CVPR2021. Две сети с разной инициализацией учат друг друга: псевдометка одной = цель для другой. Co-training снижает confirmation bias за счёт того, что модель не подтверждает только свои ошибки.",
+    "applicability": "Идея co-training релевантна, но две полноценные сети удваивают вычисления и сложнее под ваш U-Net + weak-labels. Разумнее взять более лёгкий co-training (см. Cross-Teaching) либо ограничиться Mean-Teacher. Держать как референс.",
+    "verdict": "reference",
+    "effort": "high"
+   },
+   {
+    "name": "DMT: Dynamic Mutual Training",
+    "kind": "paper",
+    "year": "2022",
+    "link": "https://arxiv.org/abs/2004.08514",
+    "license": "unverified (проверить репо)",
+    "summary": "Pattern Recognition 2022. Две модели; там где они РАСХОДЯТСЯ — вес лосса динамически понижается (расхождение = вероятная ошибка псевдометки). Локализует ошибки лучше, чем порог уверенности одной модели.",
+    "applicability": "Опциональная добавка против confirmation bias: down-weight пикселей, где ваш пиксельный U-Net и image-level DINOv2-talc-vote расходятся. Хорошо ложится на ваш уже существующий ансамбль (пиксель vs image-level голос).",
+    "verdict": "try",
+    "effort": "medium"
+   },
+   {
+    "name": "Cross Teaching between CNN and Transformer",
+    "kind": "paper",
+    "year": "2021",
+    "link": "https://arxiv.org/abs/2112.04894",
+    "license": "n/a (paper; код в SSL4MIS)",
+    "summary": "Луо 2021: CNN и трансформер кросс-обучают друг друга псевдометками на неразмеченных — лёгкая форма co-training без дублирования тяжёлого пайплайна.",
+    "applicability": "Практичный co-training под ваш случай: U-Net (пиксель) + DINOv2-голова как кросс-учителя. Разнородность архитектур усиливает антиконфирмейшн-эффект. Код есть в SSL4MIS на 2D UNet.",
+    "verdict": "try",
+    "effort": "medium"
+   },
+   {
+    "name": "ST++: Make Self-training Work Better",
+    "kind": "paper",
+    "year": "2022",
+    "link": "https://arxiv.org/abs/2106.05095",
+    "license": "unverified (репо LiheYoung/ST-PlusPlus)",
+    "summary": "CVPR2022. Спасает ОФФЛАЙН self-training: отбор НАДЁЖНЫХ неразмеченных снимков по стабильности предсказаний между чекпойнтами (image-level, не pixel), + strong-aug для декаплинга student/teacher.",
+    "applicability": "Если по инфраструктурным причинам нужно остаться на оффлайн self-training (как v6) — это минимальная правка, которая обычно убирает регрессию: обучаться только на надёжных снимках. Потолок ниже онлайн-consistency, но риск ниже.",
+    "verdict": "try",
+    "effort": "low"
+   },
+   {
+    "name": "Pseudo-Labeling and Confirmation Bias (Arazo)",
+    "kind": "paper",
+    "year": "2019",
+    "link": "https://arxiv.org/abs/1908.02983",
+    "license": "n/a (paper)",
+    "summary": "Фундаментальный разбор confirmation bias: переобучение на неверных псевдометках. Проверенные средства — mixup и ГАРАНТИРОВАННЫЙ минимум размеченных примеров в каждом мини-батче.",
+    "applicability": "Объясняет ПОЧЕМУ v6 упал и обосновывает пункт (b) рецепта: держать размеченный батч в КАЖДОЙ итерации (rehearsal) + mixup/CutMix как регуляризация. Теоретическая опора рекомендаций.",
+    "verdict": "reference",
+    "effort": "low"
+   },
+   {
+    "name": "SSL4MIS (код-коллекция SSL-сегментации)",
+    "kind": "code",
+    "year": "2022",
+    "link": "https://github.com/HiLab-git/SSL4MIS",
+    "license": "unverified (проверить репо)",
+    "summary": "Готовые 2D/3D реализации Mean Teacher, Uncertainty-Aware MT, CPS, Cross-Teaching, FixMatch, R-Drop, ICT на UNet/nnUNet — под медицинскую сегментацию (близко к микроскопии по домену/масштабу данных).",
+    "applicability": "Самый близкий к вашему U-Net практический референс кода: 2D UNet + слабые/скудные метки. Быстрее собрать рецепт, копируя их EMA-teacher/consistency-петли, чем адаптировать VOC-репозитории.",
+    "verdict": "adopt",
+    "effort": "low"
+   },
+   {
+    "name": "AllSpark (transformer SSL seg)",
+    "kind": "code",
+    "year": "2024",
+    "link": "https://github.com/xmed-lab/AllSpark",
+    "license": "unverified (проверить репо)",
+    "summary": "CVPR2024. Channel-wise cross-attention «возрождает» размеченные признаки из неразмеченных + Semantic Memory. SOTA на Pascal/Cityscapes/COCO для чистых трансформеров.",
+    "applicability": "Тяжелее и заточен под трансформерный декодер; ваш U-Net/DINOv2-пайплайн не выигрывает пропорционально сложности внедрения. Держать как ориентир SOTA, не первоочередное.",
+    "verdict": "skip",
+    "effort": "high"
+   }
+  ],
+  "top_recommendations": [
+   "Заменить ОФФЛАЙН self-training (v6) на ОНЛАЙН weak-to-strong consistency в стиле UniMatch V2 поверх вашего DINOv2 ViT-S/14 (MIT): supervised-лосс и unsupervised-consistency считаются РАЗДЕЛЬНО и суммируются, псевдометки НИКОГДА не вливаются в набор меток — это устраняет корневую причину конфликта псевдометок с плотной разметкой (боль #4).",
+   "Rehearsal против забывания редкого класса: считать ваш плотный pCE+GCE(q=0.7)+GatedCRF на 8 размеченных снимках в КАЖДОЙ итерации + генерировать псевдометки EMA-учителем (Mean Teacher), а не той же обучаемой моделью — это рвёт петлю confirmation bias, из-за которой v6 закреплял 'талька нет'.",
+   "Классово-сбалансированный/адаптивный порог уверенности (FreeMatch SAT + DARS distribution-alignment страховка): для прозрачного редкого талька порог ниже и авто-отпускается; если доля псевдо-талька падает ниже label-prior — ещё понизить порог. Прямо лечит схлопывание талька в фон (боли #1,#2).",
+   "Сильные возмущения на неразмеченных: CutMix (French 2019) + цвет-джиттер/grayscale. Цвет-аугментация сшивает оливковый(ч1) и тёмный(ч2) домены -> consistency становится доменно-устойчивой и попутно лечит domain shift (#5) без отдельного шага.",
+   "lambda-rampup (0->1) + фильтр уверенности + опционально DMT/Cross-Teaching down-weighting там, где пиксельный U-Net расходится с image-level DINOv2-talc-vote. Чекпойнт выбирать по изотонически-калиброванной area-MAE на 8-снимковом val (ваша метрика), финалом брать EMA-учителя (устойчивее при шумном val #3).",
+   "Код-старт: копировать EMA-teacher/consistency-петли из SSL4MIS (2D UNet, MIT-подобный домен) и структуру dual-stream из UniMatch V1 (MIT); полный DARS-пайплайн не тащить — взять только идею выравнивания распределения. Если нужно остаться на оффлайне — минимальная безопасная правка это ST++ (отбор надёжных снимков)."
+  ]
+ },
+ {
+  "angle": "Open code & models sweep (GitHub / HuggingFace / PapersWithCode) for reflected-light ore/mineral segmentation, DL analogs of QEMSCAN/MLA automated mineralogy, sulfide/silicate/talc detection, geometallurgy ML, ore-petrography DL and polished-section segmentation — explicitly excluding petroscope/LumenStone/micro-SAM/SAM/DINO which you already use. Bottom line up front: the reflected-light ore-microscopy DL field is code-poor. Almost nobody ships weights; the public assets are the LumenStone/FeM/Cu sets you already have. Exactly ONE new repo gives licensed, downloadable weights usable in your stack (NASA MicroNet encoders); the rest are either wrong modality (SEM/EDS/µCT/hyperspectral/transmitted-light) or code-withheld papers whose IDEAS transfer even though their code does not. No public talc-in-reflected-light model exists — confirmed, not for lack of looking.",
+  "findings": [
+   {
+    "name": "nasa/pretrained-microscopy-models (MicroNet encoders)",
+    "kind": "model",
+    "year": "2022 (repo active to 2025)",
+    "license": "MIT",
+    "link": "https://github.com/nasa/pretrained-microscopy-models",
+    "summary": "Encoder backbones (ResNet/DenseNet/EfficientNet/etc.) pretrained on MicroNet, a >100k-image materials-science microscopy corpus (metallography, SEM, superalloys, coatings). Weights hosted on HuggingFace, load directly as encoders in segmentation_models.pytorch. 122 stars, MIT, maintained.",
+    "applicability": "The ONLY find that is a real downloadable, permissively-licensed weight set that drops into a U-Net exactly like your current petroscope/LumenStone encoder. It is microscopy-pretrained (grayscale metallography/SEM texture) rather than ImageNet-natural-image, so it should transfer to reflected-light ore texture better than ImageNet and give you a second, independent init to benchmark against LumenStone — useful precisely because your talc labels are tiny/noisy and a better prior reduces variance. Domain gap remains (materials metallography vs Cu-Ni ore, no talc class), so it is an init, not a talc detector.",
+    "verdict": "try",
+    "effort": "low"
+   },
+   {
+    "name": "Instance segmentation of transparent quartz gangue in iron ore RLOM (Ferreira/Iglesias/Paciornik, Minerals Engineering 2024)",
+    "kind": "paper",
+    "year": "2024",
+    "license": "n/a (no public code released)",
+    "link": "https://www.sciencedirect.com/science/article/abs/pii/S0892687524001109",
+    "summary": "Mask R-CNN trained on 865 reflected-light optical microscopy (RLOM) images to segment quartz — a mineral that is TRANSPARENT in reflected light and whose reflectance overlaps the embedding resin, making it near-invisible to classic thresholding. F1>90%. Reference masks built via correlative SEM.",
+    "applicability": "This is the single closest published analog to your core pain: talc is transparent in reflected light exactly as quartz-in-resin is. Their playbook — (a) treat the transparent phase as an instance/region problem rather than pixel-reflectance thresholding, (b) generate ground truth from a correlated higher-fidelity modality instead of hand-drawn contours — directly maps onto talc: your unreliable blue contours are the equivalent of missing thresholds, and a correlated signal (even image-level talc vote) can act as the 'SEM' reference. Code/weights NOT public, so adopt the framing, not a download.",
+    "verdict": "reference",
+    "effort": "medium"
+   },
+   {
+    "name": "Fine-grained metal-mineral recognition/segmentation, improved YOLOv8n (Minerals Engineering 2025, S0892687525001189)",
+    "kind": "method",
+    "year": "2025",
+    "license": "n/a (no public code found)",
+    "link": "https://www.sciencedirect.com/science/article/abs/pii/S0892687525001189",
+    "summary": "Instance segmentation of fine-grained METAL (sulfide/opaque) minerals in optical microscopy; adds a small-target detection layer (C2f_ScConv) + ContextAggregation. Reports mAP50 +41% vs Mask R-CNN, +5.5% vs baseline YOLOv8n.",
+    "applicability": "Closest published target to your sulfide-detection sub-task in the exact modality (optical microscopy of opaque metal minerals). The small-target / context-aggregation tricks matter for your fine intergrowths. But no repo or weights are public, so it is only a design reference; if a repo surfaces it becomes a 'try'.",
+    "verdict": "reference",
+    "effort": "medium"
+   },
+   {
+    "name": "ltracegeo/deep-mineralogical-segmentation + 'Deep mineralogical segmentation from QEMSCAN maps' (arXiv 2505.17008, 2025)",
+    "kind": "code",
+    "year": "2025",
+    "license": "none (no LICENSE file — legally not reusable)",
+    "link": "https://github.com/ltracegeo/deep-mineralogical-segmentation",
+    "summary": "U-Net trained on plane+cross-polarized thin-section images using QEMSCAN automated-mineralogy maps as pixel-level ground truth (carbonate rocks: calcite/dolomite/clay/quartz/pores). This is a literal DL-analog-of-QEMSCAN pipeline. Repo exists but has 1 star and NO license.",
+    "applicability": "Relevant as the canonical pattern 'train a segmentation net using an automated-mineralogy map as weak/dense GT' — the same trick you could use if any MLA/QEMSCAN map of a Norilsk sample were ever available. But: transmitted-light (wrong modality), carbonate (wrong mineralogy), unlicensed (cannot vendor the code), tiny community. Take the idea, not the repo.",
+    "verdict": "reference",
+    "effort": "low"
+   },
+   {
+    "name": "IronOreRLM reflected-light iron-ore image dataset (Data in Brief 2025 / Mendeley 6hp82tsb8g)",
+    "kind": "dataset",
+    "year": "2025",
+    "license": "Mendeley Data (typically CC BY 4.0 — verify on record)",
+    "link": "https://data.mendeley.com/datasets/6hp82tsb8g/2",
+    "summary": "563 reflected-light optical microscopy (RLM) TIF images of iron ore, 4 grades (Blue Dust / Hard Laminated / Lateritic / Soft Laminated), two magnifications, India. Built for grade CLASSIFICATION — no pixel-level segmentation masks provided.",
+    "applicability": "A genuinely new in-modality (reflected-light) corpus, so usable as extra unlabeled data for self-supervised/domain pretraining of your reflected-light encoder. Caveats: iron oxides (hematite/goethite), not Cu-Ni sulfides; brown/olive color domain unlike your dark ч2; and zero segmentation labels or talc. Marginal — only worth it if you do a broad reflected-light SSL pretrain pooling many ore types.",
+    "verdict": "pretrain-only",
+    "effort": "medium"
+   },
+   {
+    "name": "PS-YOLO-seg lightweight lithium-mineral instance segmentation (Journal of Imaging 2025, PMC12296170)",
+    "kind": "method",
+    "year": "2025",
+    "license": "n/a (no confirmed public repo)",
+    "link": "https://pmc.ncbi.nlm.nih.gov/articles/PMC12296170/",
+    "summary": "Improved YOLOv12-seg for visible-light microscopy of lithium minerals; a PSConv downsampling block is specifically designed to 'enhance capture of DIM mineral textures' with 20-33% fewer FLOPs/params.",
+    "applicability": "The explicit focus on recovering DIM, low-contrast mineral texture parallels talc's near-invisibility in your dark domain. Architectural idea (contrast-preserving downsampling) is transferable. No confirmed weights/repo, so reference only.",
+    "verdict": "reference",
+    "effort": "medium"
+   },
+   {
+    "name": "Res-UNet ensemble for mineral optical-microscopy segmentation (Minerals 2024, min14121281)",
+    "kind": "method",
+    "year": "2024",
+    "license": "n/a (paper only, no code located)",
+    "link": "https://www.mdpi.com/2075-163X/14/12/1281",
+    "summary": "Ensemble of Res-UNet variants with a spatial-transformer front block and a dice+focal loss combo, explicitly targeting CLASS IMBALANCE (rare mineral classes get low accuracy) in optical-microscopy mineral segmentation.",
+    "applicability": "Right modality and directly addresses class imbalance — analogous to your rare/under-labeled talc pixels. The dice+focal recipe and STN pre-alignment are cheap to lift into your U-Net. No public code, so treat as a loss/architecture reference, not a download.",
+    "verdict": "reference",
+    "effort": "low"
+   },
+   {
+    "name": "Multimodal GNN mineral segmentation (arXiv 2503.03507) & github 'graph-segmentation' (EDS spectral images)",
+    "kind": "code",
+    "year": "2025",
+    "license": "varies (SEM/EDS oriented)",
+    "link": "https://arxiv.org/abs/2503.03507",
+    "summary": "Graph neural network fuses BSE electron images with SPARSE point EDS spectra (as few as 1% of pixels) to segment mineral phases — a way to get dense mineral maps from very sparse chemical labels.",
+    "applicability": "Wrong modality (SEM/EDS, not optical), so not deployable. The one transferable notion is 'propagate labels from ~1% sparse points to a dense map', which loosely mirrors your incomplete talc annotation — but your signal is RGB texture, not spectra, so the GNN machinery does not carry over. Skip for code; note the sparse-to-dense framing.",
+    "verdict": "skip",
+    "effort": "high"
+   },
+   {
+    "name": "MIC-DKFZ/ParticleSeg3D (Apache-2.0, weights) & BAMresearch/automatic-sem-image-segmentation",
+    "kind": "model",
+    "year": "2024",
+    "license": "Apache-2.0 / custom",
+    "link": "https://github.com/MIC-DKFZ/ParticleSeg3D",
+    "summary": "ParticleSeg3D: nnU-Net instance segmentation of individual ore PARTICLES in µCT volumes of grains embedded in epoxy, with downloadable weights (18 stars). BAM repo: trained nets for SEM particle semantic segmentation (76 stars).",
+    "applicability": "Both are well-engineered with real weights, but the modality (3D X-ray CT / SEM) and task (separating discrete particles in resin, not segmenting phase boundaries inside a polished panorama) do not match reflected-light phase segmentation. Not usable for talc/sulfide phase maps.",
+    "verdict": "skip",
+    "effort": "high"
+   },
+   {
+    "name": "jabarhabashi1/Deep-Learning — Hyperspectral Mineral Mapping Toolbox (3D-CNN)",
+    "kind": "code",
+    "year": "2025",
+    "license": "none",
+    "link": "https://github.com/jabarhabashi1/Deep-Learning",
+    "summary": "Physics-guided 3D-CNN that maps hyperspectral scenes to mineral class/abundance maps; TALC is an explicit target class alongside chlorite/quartz (alteration minerals). 6 stars, no license.",
+    "applicability": "Notable only because talc is a named class — confirming talc IS spectrally separable given the right modality. But it needs hyperspectral cubes (EMIT/EnMAP), not your RGB reflected-light panoramas, and has no license. Reference for 'talc has a distinct spectral signature you are not capturing in dark RGB'; not deployable.",
+    "verdict": "skip",
+    "effort": "high"
+   },
+   {
+    "name": "Menoufia MUMDMC2025 photomicrograph dataset (Nature Scientific Data 2025, s41597-025-05879-9)",
+    "kind": "dataset",
+    "year": "2025",
+    "license": "CC BY 4.0",
+    "link": "https://www.nature.com/articles/s41597-025-05879-9",
+    "summary": "14,400 photomicrographs of 5 rock-forming silicates (biotite, hornblende, plagioclase, K-feldspar, quartz) imaged at 72 rotations under PPL and XPL (TRANSMITTED light).",
+    "applicability": "Transmitted-light, silicate rock-forming minerals, image-level classification — no opaque ore phases, no sulfides, no talc, wrong illumination. Zero applicability to reflected-light Cu-Ni ore beyond generic pretraining, which MicroNet already covers better.",
+    "verdict": "skip",
+    "effort": "low"
+   },
+   {
+    "name": "GI/Copernicus open-source automated mineralogy from EDS (QGIS + random forest, 2025) and commercial-MLA framing",
+    "kind": "method",
+    "year": "2025",
+    "license": "open-source (QGIS/Orfeo ToolBox stack)",
+    "link": "https://gi.copernicus.org/articles/14/193/2025/",
+    "summary": "Free open-source pipeline that reproduces QEMSCAN-style modal mineralogy from EDS scans of thin sections using a random-forest classifier inside QGIS — a genuine open MLA analog.",
+    "applicability": "The only fully-open automated-mineralogy pipeline found, but it consumes EDS chemistry, not optical images, so it cannot run on your panoramas. Useful only as a reference blueprint for how a QEMSCAN-analog is structured (per-pixel classify then quantify modal %) — which your composite talc-% rule already mirrors.",
+    "verdict": "reference",
+    "effort": "low"
+   }
+  ],
+  "top_recommendations": [
+   "ADOPT/TRY the one real weight-bearing find: nasa/pretrained-microscopy-models (MicroNet, MIT, weights on HuggingFace, drop-in for segmentation_models.pytorch). It is microscopy-pretrained rather than ImageNet, so use it as a second independent encoder init to benchmark against your petroscope/LumenStone encoder — a stronger prior directly counters your tiny/noisy talc-label variance. Low effort (swap encoder name).",
+   "STEAL THE METHOD, NOT THE CODE — transparent quartz-in-resin = transparent talc. The Minerals Engineering 2024 RLOM quartz-gangue work (Mask R-CNN + correlative-reference labels for a mineral that is transparent in reflected light) is the closest published analog to your central pain. Reframe talc as an instance/region problem with ground truth derived from a correlated signal (your image-level talc vote), instead of trusting the non-closing blue contours as pixel labels.",
+   "REALITY CHECK to set expectations: after a full GitHub/HF/PapersWithCode sweep, there is NO public model or repo with weights for talc — or for Cu-Ni sulfide phase segmentation in reflected light — beyond the LumenStone/FeM/Cu assets you already use. The 2024-25 work that IS in-modality (YOLOv8n metal minerals, Res-UNet ensemble for class imbalance, PS-YOLO dim-texture capture, QEMSCAN-map U-Net) all withholds weights or is transmitted-light/SEM/µCT/hyperspectral. Plan to build the talc model in-house; harvest only their design tricks (dice+focal for imbalance, small-target/context layers, contrast-preserving downsampling, automated-mineralogy-map-as-GT).",
+   "MARGINAL DATA LEAD: IronOreRLM (Mendeley, 563 reflected-light ore images, 2025) is new in-modality unlabeled data for self-supervised reflected-light pretraining — but it is iron oxide (brown domain, no masks, no talc), so only worth pooling into a broad SSL pretrain, not a quick win."
+  ]
+ },
+ {
+  "angle": "Open-data sweep (Zenodo / Mendeley / Kaggle / figshare / Roboflow Universe / ScienceDB) for reflected-light ore-microscopy / polished-section imagery, mineral-phase segmentation masks, and large unlabeled corpora for self-supervised backbone pretraining — deliberately excluding the already-known LumenStone / Cu-Zenodo / FeM. Headline conclusion: genuinely-new OPEN reflected-light ore datasets are very scarce. Almost every \"mineral microscopy\" dataset in these repos is the WRONG modality for us — transmitted-light polarized thin sections (silicates) or SEM/BSE — not reflected-light polished opaque ore. Only one new corpus (IronOreRLM) matches our exact imaging modality, and it is iron-oxide, classification-only, no masks. So the practical payoff of this direction is (a) one extra in-domain corpus for SSL pretraining, and (b) a nickel-ore transparent-mineral method paper that mirrors our talc-in-reflected-light problem. Talc/soapstone/serpentine reflected-light segmentation data does not exist openly (confirmed: no dataset of talc in reflected light on any platform).",
+  "findings": [
+   {
+    "name": "IronOreRLM — Iron Ore Image Data (Mendeley Data 6hp82tsb8g / Data in Brief 2025)",
+    "kind": "dataset",
+    "year": "2025",
+    "license": "CC BY 4.0",
+    "link": "https://data.mendeley.com/datasets/6hp82tsb8g/2",
+    "summary": "563 reflected-light microscopy (RLM) micrographs of polished iron ore from Indian mines, four grades (Blue-Dust/Hard-Laminated/Lateritic/Soft-Laminated), two objectives (10x, 20x), TIF 2048x1536, organized in class folders. Classification labels only — NO pixel segmentation masks. Authors: Indian School of Mines / BIT Mesra. Also published as a Data-in-Brief descriptor (S2352340925002720) and mirrored on Kaggle.",
+    "applicability": "The ONLY genuinely-new open corpus that matches our exact modality (reflected-light optical microscopy of polished ore). Direct use against our pain #4 (lots of unlabeled, self-training regressed): fold it into the unlabeled pool for self-supervised backbone pretraining (DINOv2/Franca continued-pretraining or petroscope encoder) to broaden the reflected-light manifold instead of risking pseudo-label conflicts. Also a ready-made domain-shift probe (pain #5): Indian iron-oxide ore illumination vs our olive/dark Norilsk domains — good for testing Reinhard/color-adaptation robustness. Caveats: iron oxides (hematite/goethite/magnetite/martite), NOT Cu-Ni sulfides; contains no talc and no masks, so zero direct supervision for our talc or phase heads.",
+    "verdict": "pretrain-only",
+    "effort": "low"
+   },
+   {
+    "name": "De Castro et al. — 'Powder-based polished sections by automated optical mineralogy, Part 2: deep learning for TRANSPARENT mineral detection' (Minerals Engineering)",
+    "kind": "paper",
+    "year": "2023",
+    "license": "Paywalled (Elsevier); no open dataset or code released",
+    "link": "https://www.sciencedirect.com/science/article/abs/pii/S0892687523005228",
+    "summary": "Trains a DL segmenter to detect TRANSPARENT (non-opaque) minerals set in acrylic resin, from reflected-light optical micrographs of polished sections made from Canadian NICKEL and gold ores. Part 1 (S0892687523003011) covers the powder-mount preparation. Reports good detection of transparent phases against resin under reflected light.",
+    "applicability": "The closest published analog to our two hardest pains simultaneously: pain #2 (talc is transparent in reflected light and 'invisible' in the dark domain) and the Ni-ore domain itself. It demonstrates transparent gangue IS separable in reflected light by its resin-contrast/low-reflectance signature — validating our talc-as-transparent-phase framing and suggesting resin-contrast / dark-region features rather than fighting the invisibility. No data or weights though, so it's an idea/benchmark reference only, not something to train on.",
+    "verdict": "reference",
+    "effort": "low"
+   },
+   {
+    "name": "MatSSL — Robust Self-Supervised Representation Learning for Metallographic Image Segmentation (ICCV-W 2025)",
+    "kind": "method",
+    "year": "2025",
+    "license": "Code released (open; verify repo license before use)",
+    "link": "https://arxiv.org/abs/2507.18184",
+    "summary": "SSL recipe that pretrains on a SMALL unlabeled micrograph set (not web-scale) with Gated Feature Fusion across backbone stages, then fine-tunes segmentation on very few labels. Beats ImageNet-init on MetalDAM (+2.4 mIoU) and up to ~40% mIoU gain on the EBC coating benchmark. Explicitly targets 'inconsistent performance with only a few labeled samples'. Domain = metallography (reflected-light-adjacent grayscale micrographs of polished metal).",
+    "applicability": "Directly addresses our pain #3/#4 combo (tiny noisy labeled talc set + many unlabeled panoramas) and offers a principled alternative to the self-training that regressed us to 18.8 MAE: it improves the representation via SSL instead of injecting conflicting pseudo-labels onto densely-annotated tiles. Could pretrain/adapt a segmentation encoder on our unlabeled panoramas + IronOreRLM and then fine-tune the talc U-Net on few labels. Method, not data — but the most transferable new technique found in this sweep.",
+    "verdict": "try",
+    "effort": "medium"
+   },
+   {
+    "name": "Roboflow Universe — 'BSE image - mineral segmentation' (ZZZZZZH)",
+    "kind": "dataset",
+    "year": "2024",
+    "license": "Roboflow (commonly CC BY 4.0 — confirm on the page)",
+    "link": "https://universe.roboflow.com/zzzzzzh/bse-image-mineral-segmentation",
+    "summary": "~824 images with instance-segmentation masks of mineral phases, imaged by BSE (backscattered-electron SEM), grayscale.",
+    "applicability": "Has the thing we lack (phase masks), but wrong imaging physics: BSE contrast is atomic-number-based grayscale, not optical reflectance color — a talc/sulfide/gray-phase mapping learned here will not transfer to our reflected-light color domain, and mineral identities are unspecified. At most a weak auxiliary phase-segmentation pretraining signal; not worth the domain-bridging effort.",
+    "verdict": "skip",
+    "effort": "low"
+   },
+   {
+    "name": "Roboflow Universe — 'Mineral Segmention' (Microscopia mineral 1)",
+    "kind": "dataset",
+    "year": "2024",
+    "license": "Roboflow CC BY 4.0",
+    "link": "https://universe.roboflow.com/microscopia-mineral-1/mineral-segmention",
+    "summary": "~304 petrographic THIN-SECTION photomicrographs with semantic masks, 3 classes (andalusite, biotite, ooid), reported mIoU 85.5%. Same base data as the 2025 Sci Reports thin-section segmentation study.",
+    "applicability": "Transmitted-light polarized thin sections of transparent silicates — opposite modality to our reflected-light opaque ore, and none of our minerals (sulfides/talc). No transfer value; listing it so it isn't re-investigated.",
+    "verdict": "skip",
+    "effort": "low"
+   },
+   {
+    "name": "MUMDMC2025 — Menoufia University Minerals Classification photomicrograph dataset (Nature Scientific Data)",
+    "kind": "dataset",
+    "year": "2025",
+    "license": "CC BY 4.0",
+    "link": "https://www.nature.com/articles/s41597-025-05879-9",
+    "summary": "14,400 photomicrographs (public subset 2,500; 500/class) of 5 rock-forming silicates (biotite, hornblende, plagioclase, K-feldspar, quartz), each specimen imaged at 72 rotations under PPL and XPL (transmitted polarized light), 3584x2746, hosted on figshare. Image-level CLASSIFICATION labels only, no masks.",
+    "applicability": "Large and cleanly licensed, but transmitted-light silicates — a severe domain gap from our reflected-light opaque ore, and it targets silicate species we don't classify. Even the 'gray silicate / gangue' overlap is transmitted-light, so it won't help our nerudnaya (gray non-ore) phase. Not worth pretraining on over in-domain reflected-light data.",
+    "verdict": "skip",
+    "effort": "low"
+   },
+   {
+    "name": "RoImAI — vision foundation model for rock thin-section images + 30,336-image corpus (Nature Communications Engineering)",
+    "kind": "model",
+    "year": "2025",
+    "license": "Weights/data availability NOT confirmed in the paper metadata (likely restricted)",
+    "link": "https://www.nature.com/articles/s44172-025-00565-5",
+    "summary": "Transformer foundation model for rock thin-section segmentation/identification/report-generation, trained on 30,336 thin-section images (~2M particles) from 17 regions. Related efforts: ThinGPT, PetroMind (multimodal petrography LLMs).",
+    "applicability": "Demonstrates the domain-foundation-model recipe (large in-domain corpus -> segment+classify) we'd want for reflected-light ore, but it is transmitted-light thin sections; as a backbone it would be inferior to our DINOv2/petroscope for reflected-light opaque phases, and weights don't appear to be openly downloadable. Keep only as a design reference for how a domain foundation model + hierarchical head is assembled if we ever curate our own reflected-light corpus.",
+    "verdict": "reference",
+    "effort": "high"
+   },
+   {
+    "name": "'Segmentation and Labeling of Polished Section Images Based on Deep Learning' (Mining, Metallurgy & Exploration 2025)",
+    "kind": "paper",
+    "year": "2025",
+    "license": "Paywalled (Springer); open data release UNVERIFIED",
+    "link": "https://link.springer.com/article/10.1007/s42461-025-01205-4",
+    "summary": "2025 DL segmentation+labeling of reflected-light polished-section images — correct modality (polished section, reflected light). Could not access full text (auth wall); could not confirm whether a dataset/code is released or whether it merely re-uses existing data.",
+    "applicability": "Only lead in the correct modality besides IronOreRLM that might carry a new open dataset. Flagged for a manual follow-up: check the paper's Data/Code Availability section — if it releases masks on reflected-light polished sections it would be directly usable for our phase-segmentation head. Do not assume it exists until verified.",
+    "verdict": "reference",
+    "effort": "low"
+   }
+  ],
+  "top_recommendations": [
+   "ADOPT-as-pretraining: pull IronOreRLM (563 reflected-light polished-ore micrographs, CC BY 4.0, Mendeley 6hp82tsb8g) into the unlabeled pool for self-supervised backbone adaptation (DINOv2/Franca continued-pretraining or petroscope encoder) — it is the only new open corpus matching our exact modality; use it also as a color/domain-shift stress test. Low effort, no risk to the labeled pipeline.",
+   "TRY (method, not data): MatSSL (ICCV-W 2025, code open) as a safer way to exploit our many unlabeled panoramas than the self-training that regressed us to 18.8 MAE — it improves the encoder via SSL on a small in-domain unlabeled set + few-label fine-tune, avoiding pseudo-label conflict with dense annotations.",
+   "READ (method reference for the talc pain): De Castro et al. Minerals Engineering 2023 Part 1+2 — transparent-mineral detection in reflected-light polished sections of Canadian NICKEL ore. Closest published analog to our talc-transparent-in-reflected-light problem; borrow the resin/low-reflectance-contrast framing even though no data is released.",
+   "HONEST NEGATIVE RESULT: No open dataset of talc/soapstone/serpentine in reflected light exists on any platform, and no new open Cu-Ni sulfide reflected-light dataset beyond LumenStone was found. Almost all 'mineral microscopy' datasets in Zenodo/Mendeley/Kaggle/figshare/Roboflow are transmitted-light silicate thin sections or SEM/BSE — wrong modality for us. Do not spend more time expecting a drop-in labeled reflected-light talc corpus; the leverage is in-domain SSL pretraining plus better use of our own weak labels.",
+   "VERIFY one lead: the paywalled 'Segmentation and Labeling of Polished Section Images Based on Deep Learning' (MM&E 2025) is the right modality — check its Data Availability section for a possible new open reflected-light mask set before dismissing."
+  ]
+ },
+ {
+  "angle": "Надёжная оценка при крошечном шумном val (8 снимков) + честная квантификация площадной доли талька + доменная адаптация оптика↔оптика (оливковый ч1 ↔ тёмный ч2). Ключевой вывод: (1) вашу «долю талька» правильнее решать не как регрессию с изотонической калибровкой, а как задачу QUANTIFICATION LEARNING (ACC/PACC/SLD) — она делает bias-коррекцию доли под сдвигом приора и работает на уровне МИЛЛИОНОВ пикселей, а не 8 снимков, поэтому статистически мощна даже при крошечном val; (2) честный интервал на долю даёт conformal-volumetry (convolt), но split-conformal на n=8 калибровочных снимках упирается в квантование покрытия 1/(n+1) — узкое место не метод, а число надёжно размеченных калибровочных примеров, поэтому калибровать надо на пиксельных/фрагментных счётчиках либо на image-level долях; (3) для оценки — bootstrap-CI + LOO с честной демонстрацией ШИРОКОГО интервала, плюс поправка на то, что метрики против шумного GT смещены; (4) домен — начать с training-free FDA (свап низкочастотной амплитуды) и match_histograms/RandStainNA-LAB, а тяжёлый CycleGAN/StainGAN приберечь под ваши МНОГО unlabeled тёмных снимков, осторожно с сохранением мелких структур; Macenko/Vahadane физически не подходят (отражённый свет ≠ поглощающие красители).",
+  "findings": [
+   {
+    "name": "QuaPy + Adjusted/Probabilistic Classify & Count (ACC/PACC), SLD/EM",
+    "kind": "code",
+    "summary": "Библиотека и методы 'обучения квантификации' (supervised prevalence estimation). ACC/PACC корректируют оценку доли класса, используя оценённые на val misclassification-rates (по сути confusion matrix), а SLD/EM (Saerens) итеративно подгоняет приор под целевой домен. Именно этому посвящён поддомен ML, а не регрессии.",
+    "applicability": "Прямое попадание в вашу боль квантификации доли талька и в image-level talc-vote. Ваша 'доля талька' = задача quantification, а не регрессия: ACC/PACC дают bias-скорректированную долю и штатно учитывают сдвиг приора между оливковым и тёмным доменом. Критично: коррекция оценивается на СЧЁТЧИКАХ пикселей/фрагментов (миллионы наблюдений), поэтому статистически мощна даже когда снимков всего 8 — обходит крошечность val. Можно заменить/дополнить изотоническую калибровку доли (изотоника не моделирует сдвиг приора, ACC — моделирует). BSD-3, pip install quapy.",
+    "verdict": "adopt",
+    "effort": "low",
+    "year": "2021",
+    "license": "BSD-3-Clause",
+    "link": "https://github.com/HLT-ISTI/QuaPy"
+   },
+   {
+    "name": "Efficient Conformal Volumetry for Template-Based Segmentation (convolt)",
+    "kind": "code",
+    "summary": "Conformal prediction для СКАЛЯРНЫХ величин, производных от сегментации (объём/площадная доля): вместо точечной оценки строит prediction-интервал с distribution-free покрытием на заданном уровне. Cheung, Veeraraghavan, Balakrishnan, 2026.",
+    "applicability": "Даёт честный интервал на площадную долю талька с конечно-выборочной гарантией покрытия — ровно ваш ГОСТ-порог >10% с доверительным интервалом. Каверза: split-conformal при n калибровочных примерах квантует достижимое покрытие шагом 1/(n+1); при 8 снимках максимум ~89% и очень широкий интервал. Вывод: калибруйте не на 8 снимках-масках, а на большем наборе НАДЁЖНЫХ image-level долей (легче разметить долю на глаз, чем пиксельную маску) — тогда интервал станет полезным. Код CC-BY-4.0.",
+    "verdict": "try",
+    "effort": "medium",
+    "year": "2026",
+    "license": "CC-BY-4.0",
+    "link": "https://github.com/matthewyccheung/convolt"
+   },
+   {
+    "name": "Confidence Intervals for Performance Estimates in Brain MRI Segmentation (SegVal_Repo)",
+    "kind": "code",
+    "summary": "Систематическое сравнение bootstrap (15k ресэмплов, без предположений о распределении) против параметрических (SEM=σ/√n) CI для Dice/Hausdorff при варьируемом размере test-набора; готовый код и таблица размеров выборки. Тестируют вплоть до k=10.",
+    "applicability": "Прямой рецепт как ЧЕСТНО отчитаться по вашим 8 val: перцентильный bootstrap + leave-one-out на 8 снимках, и явно показать, что CID широкий. Их же таблица докажет организаторам, что при n=8 узкий CI физически невозможен — снимает претензию к нестабильности метрик, превращая её в корректно заявленную неопределённость. Параметрический CI у них хорошо совпадает с bootstrap даже для негауссовых метрик — можно давать оба.",
+    "verdict": "adopt",
+    "effort": "low",
+    "year": "2023",
+    "license": "см. репозиторий",
+    "link": "https://github.com/rosanajurdi/SegVal_Repo"
+   },
+   {
+    "name": "Aleatoric uncertainty via Test-Time Augmentation (Wang et al., 2019)",
+    "kind": "method",
+    "summary": "Формальная TTA-схема для сегментации: усреднение предсказаний по флипам/поворотам/масштабам/яркости через Монте-Карло даёт и более устойчивую маску, и пиксельную алеаторную неопределённость. Проверено на медицинских и (в смежных работах) микроскопических клетках.",
+    "applicability": "Дёшево стабилизирует крошечный шумный val и, что важнее, усредняет оценку ДОЛИ талька (снижает дисперсию площадной оценки), плюс даёт карту неопределённости — где тальк прозрачен и модель не уверена. Флип/поворот безопасны для отражённого света; варьирование яркости имитирует ваш оливковый↔тёмный сдвиг. Не требует переобучения. Осторожно: сильные фотометрические аугментации применяйте по домену.",
+    "verdict": "adopt",
+    "effort": "low",
+    "year": "2019",
+    "license": "исследовательский код",
+    "link": "https://arxiv.org/abs/1807.07356"
+   },
+   {
+    "name": "FDA: Fourier Domain Adaptation (Yang et al., CVPR 2020)",
+    "kind": "code",
+    "summary": "Training-free доменная адаптация: FFT источника и цели, замена НИЗКОЧАСТОТНОЙ части амплитудного спектра источника на целевую, обратный FFT. Выравнивает 'стиль/освещение' без сетей и без adversarial-обучения; один гиперпараметр β (размер окна).",
+    "applicability": "Идеально под оливковый↔тёмный: переносите низкочастотную амплитуду тёмного домена на оливковые снимки (и наоборот) как препроцессинг/аугментацию, ФАЗА (структура фаз, границы сульфидов/талька) сохраняется. Использует ваши МНОГО unlabeled тёмных снимков без псевдометок — обходит регрессию self-training (v6). Реализуется в ~15 строк numpy, интегрируется в обучение U-Net. Каверза: применять к ОРИГИНАЛУ до нормализации (иначе артефакты); лицензия в репо явно не указана — используйте только сам алгоритм свапа (он тривиален и не патентован).",
+    "verdict": "adopt",
+    "effort": "low",
+    "year": "2020",
+    "license": "не указана в репо (алгоритм тривиален)",
+    "link": "https://github.com/YanchaoYang/FDA"
+   },
+   {
+    "name": "RandStainNA (Shen et al., MICCAI 2022)",
+    "kind": "code",
+    "summary": "Мост между stain-нормализацией и аугментацией: случайно сэмплирует целевую цветовую статистику в LAB/HSV/HED в пределах реалистичного диапазона, обучая цвето-агностичную модель. Есть готовый код.",
+    "applicability": "Вариант в LAB напрямую ложится на ваш LAB-адаптивный пайплайн и делает U-Net талька устойчивым к сдвигу оливковый↔тёмный без GAN. В отличие от чистой аугментации — ограничивает диапазон реалистичной статистикой доменов, что важно при 2 явных доменах съёмки. Не требует парных данных. Более безопасно для мелких прозрачных структур талька, чем CycleGAN.",
+    "verdict": "try",
+    "effort": "medium",
+    "year": "2022",
+    "license": "см. репозиторий (research)",
+    "link": "https://github.com/yiqings/RandStainNA"
+   },
+   {
+    "name": "Conformal Risk Control (Angelopoulos et al., 2022)",
+    "kind": "code",
+    "summary": "Обобщение split-conformal: контролирует ОЖИДАЕМОЕ значение любой монотонной функции потерь с конечно-выборочной гарантией (алгоритм — 5 строк). Готовые примеры на бинарное покрытие/false-negative-rate в сегментации. MIT.",
+    "applicability": "Позволяет выбрать порог сегментации талька так, чтобы гарантировать, например, долю ложно-негативного покрытия талька ≤ α — это прямо адресует НЕПОЛНУЮ (incomplete) разметку талька (метка занижена, важно не пропускать). Каверза, общая для всех conformal: калибровочные метки должны быть надёжны и обменяемы; на 8 шумных снимках гарантия рыхлая. Комбинируйте с методом ниже (шумные метки) и с калибровкой на пиксельных счётчиках.",
+    "verdict": "try",
+    "effort": "medium",
+    "year": "2022",
+    "license": "MIT",
+    "link": "https://github.com/aangelopoulos/conformal-risk"
+   },
+   {
+    "name": "Adaptive conformal classification with noisy labels (Sesia, Wang, Tong, 2024) + Label Noise Robustness of CP (Einbinder et al., JMLR 2024)",
+    "kind": "paper",
+    "summary": "Точная характеризация того, как шум калибровочных меток раздувает/сжимает реальное покрытие conformal, и алгоритмы поправки: при известном уровне шума можно восстановить бесшумный порог без чистых данных. JRSSB-B 2024.",
+    "applicability": "Критично, потому что ваш КАЛИБРОВОЧНЫЙ val шумный (сульфиды внутри синих контуров = ложные позитивы, незамкнутые обводки). Стандартный conformal/conformal-risk на таком val даст СМЕЩЁННУЮ гарантию — эти работы говорят как её скорректировать, если оценить уровень шума метки. Теоретически тяжело, но это честный ответ на вопрос 'можно ли вообще давать гарантию на шумном GT'. Держите как обоснование в отчёте, даже если внедрять частично.",
+    "verdict": "reference",
+    "effort": "high",
+    "year": "2024",
+    "license": "n/a (paper)",
+    "link": "https://arxiv.org/abs/2309.05092"
+   },
+   {
+    "name": "AdaBN / Revisiting BatchNorm for Domain Adaptation (Li et al., 2018)",
+    "kind": "method",
+    "summary": "Пересчитать статистики BatchNorm (mean/var) на изображениях целевого домена, оставив веса неизменными. Ноль обучаемых параметров, гипотеза: домен живёт в BN-статистиках, знания о классах — в весах.",
+    "applicability": "Самый дешёвый test-time-адаптер оливковый→тёмный: прогнать неразмеченные тёмные снимки, обновить BN-статистики энкодера/декодера U-Net талька. Использует unlabeled без псевдометок (обходит регрессию v6). Каверза: работает только если в вашей сети есть BN (у petroscope/LumenStone-энкодера проверьте; если GroupNorm — неприменимо). Дешевле и стабильнее, чем TENT на крошечных батчах.",
+    "verdict": "try",
+    "effort": "low",
+    "year": "2018",
+    "license": "n/a (method)",
+    "link": "https://arxiv.org/abs/1603.04779"
+   },
+   {
+    "name": "TENT: Fully Test-Time Adaptation by Entropy Minimization (Wang et al., ICLR 2021)",
+    "kind": "method",
+    "summary": "На тесте минимизирует энтропию предсказаний, обновляя только аффинные параметры BN (и BN-статистики). Source-free, показан на GTA→Cityscapes сегментации. Код доступен.",
+    "applicability": "Онлайн-адаптация к тёмному домену без меток. НО честная оговорка: свежие бенчмарки (single-image TTA, InTEnt, benchmark 2512.02497) показывают, что TENT/CoTTA/SAR деградируют при МАЛЫХ батчах и на медицинской/микроскопической сегментации, а панорамы у вас крупные — батч будет крошечным. Пробовать после AdaBN, с осторожностью и обязательным откатом по val. Риск нестабильности выше выигрыша при вашем размере данных.",
+    "verdict": "try",
+    "effort": "medium",
+    "year": "2021",
+    "license": "MIT",
+    "link": "https://github.com/DequanWang/tent"
+   },
+   {
+    "name": "StainGAN / MultiStain-CycleGAN — unpaired domain translation",
+    "kind": "method",
+    "summary": "CycleGAN с cycle-consistency переносит 'стиль окраски' между доменами без парных данных; StainGAN убирает необходимость в референсном изображении. MultiStain-CycleGAN — мультидоменный вариант.",
+    "applicability": "Сильный перенос оливковый↔тёмный, использующий ваши МНОГО unlabeled снимков ч2 — потенциально лучше линейных методов при большом сдвиге освещения. НО серьёзная каверза: CycleGAN печально известен несохранением мелких объектов и галлюцинациями (droplet-артефакты) — для ПРОЗРАЧНОГО талька и тонких границ сульфидов это может ломать пиксельную маску. Если брать — UNet-генератор со skip-connections + spectral norm, и валидировать, что доля фаз сохраняется. Тяжело и рискованно; FDA/RandStainNA попробовать первыми.",
+    "verdict": "try",
+    "effort": "high",
+    "year": "2019",
+    "license": "research (см. репозитории)",
+    "link": "https://arxiv.org/abs/2301.09431"
+   },
+   {
+    "name": "FACT / Fourier-based augmentation for Domain Generalization (Xu et al., CVPR 2021; Pattern Recognition 2023)",
+    "kind": "method",
+    "summary": "Аугментация в спектре Фурье: линейно интерполировать АМПЛИТУДУ между изображениями (стиль), сохраняя ФАЗУ (семантика), + co-teacher консистентность. Обобщение FDA на domain generalization.",
+    "applicability": "Если хотите не адаптироваться под конкретный тёмный домен, а стать домен-РОБАСТНЫМ к обоим (и к будущим панорамам): амплитудная аугментация делает U-Net талька инвариантным к освещению, сохраняя структуру фаз. Хорошо сочетается с FDA (тот же принцип, но как аугментация в обучении). Средняя сложность; безопаснее CycleGAN.",
+    "verdict": "try",
+    "effort": "medium",
+    "year": "2023",
+    "license": "research code",
+    "link": "https://www.sciencedirect.com/science/article/abs/pii/S0031320323001747"
+   },
+   {
+    "name": "Macenko / Vahadane stain normalization (torch-staintools, GPU)",
+    "kind": "code",
+    "summary": "GPU-PyTorch реализация Reinhard/Macenko/Vahadane: OD-пространство + SVD (Macenko) или sparse-NMF (Vahadane) для разделения красителей; работает на произвольных RGB, дифференцируема, есть stain-augmentation.",
+    "applicability": "ЧЕСТНО: Macenko/Vahadane физически предполагают ПОГЛОЩАЮЩИЕ красители и закон Бера-Ламберта (проходящий свет, H&E). Ваш домен — ОТРАЖЁННЫЙ свет по полированному аншлифу, фазы отражают, а не поглощают → OD-декомпозиция физически не осмысленна, стайн-векторы не соответствуют реальным фазам. Для НОРМАЛИЗАЦИИ — skip. Полезен лишь LAB/Reinhard-компонент и augment-режим (случайная цветовая статистика), но это дублирует RandStainNA. Держите как reference, не тратьте время на Vahadane.",
+    "verdict": "skip",
+    "effort": "medium",
+    "year": "2023",
+    "license": "см. репозиторий",
+    "link": "https://github.com/CielAl/torch-staintools"
+   },
+   {
+    "name": "skimage.exposure.match_histograms — гистограммное сопоставление",
+    "kind": "method",
+    "summary": "Тривиальный per-channel перенос: подгоняет гистограмму изображения под референсное. BSD, одна функция.",
+    "applicability": "Самый дешёвый бридж оливковый↔тёмный за пределами Reinhard (Reinhard = только среднее/дисперсия в LAB; match_histograms выравнивает ВСЮ форму распределения, часто заметно лучше при нелинейном сдвиге яркости). 5 минут внедрения, сразу как бейзлайн-домен-адаптация и как аугментация. Каверза: покаждый канал независимо, может сместить цветовой баланс — проверяйте на фазовых масках.",
+    "verdict": "try",
+    "effort": "low",
+    "year": "n/a",
+    "license": "BSD-3-Clause",
+    "link": "https://scikit-image.org/docs/stable/api/skimage.exposure.html#skimage.exposure.match_histograms"
+   },
+   {
+    "name": "Estimating label quality/errors in semantic segmentation via any model (Lad & Mueller, 2023; cleanlab)",
+    "kind": "code",
+    "summary": "Model-agnostic оценка качества пиксельной разметки: ранжирует изображения/пиксели по вероятности ошибки метки, используя softmax любой модели (confident-learning). Реализовано в cleanlab.",
+    "applicability": "Прямо на вашу боль шумной разметки талька: прогнать по val/train и найти (а) сульфиды внутри синих контуров = ложные позитивы в метке, (б) незамеченный тальк вне обводок. Позволяет либо очистить крошечный val (сделать оценку честнее), либо взвесить/исключить шумные пиксели при обучении. Каверза: cleanlab под AGPL-3.0 — для соревнования проверьте совместимость лицензии, но идею confident-learning можно реализовать самостоятельно.",
+    "verdict": "try",
+    "effort": "medium",
+    "year": "2023",
+    "license": "AGPL-3.0 (cleanlab)",
+    "link": "https://arxiv.org/abs/2307.05080"
+   },
+   {
+    "name": "Label Noise in Pathological Segmentation ... Overestimation of AI (2024/2025)",
+    "kind": "paper",
+    "summary": "Показывает, что метрики (Dice и др.), посчитанные против ШУМНОГО GT, систематически смещены и ведут к ПЕРЕоценке качества модели; шум разметки в сегментации массово недооценён.",
+    "applicability": "Обязательная оговорка в вашем отчёте: val MAE 10.2 п.п. и macro-F1 0.939 измерены против шумной/неполной разметки талька, поэтому это НЕ чистая истина — вероятно оптимистично смещены там, где метка занижена. Аргумент за (а) оценку на очищенном подмножестве, (б) отчёт с CI, (в) человеко-экспертную ре-проверку 8 val. Защищает от переобучения под артефакты разметки.",
+    "verdict": "reference",
+    "effort": "low",
+    "year": "2024",
+    "license": "n/a (paper)",
+    "link": "https://pmc.ncbi.nlm.nih.gov/articles/PMC12951102/"
+   },
+   {
+    "name": "Repeated/Nested CV + 0.632+ bootstrap для крошечных выборок",
+    "kind": "method",
+    "summary": "Для малых n: repeated nested CV почти без смещения; .632+ bootstrap корректирует оптимистичное смещение оценки. Простой k-fold на малом n сильно смещён.",
+    "applicability": "Для оценки ТИПА срастаний (F1 0.915) и составного правила классификации (macro-F1 0.939) на малой выборке снимков используйте повторный (repeated) stratified/nested CV с bootstrap-CI вместо одного сплита — это стабилизирует и обесмещивает метрику. Для пиксельной сегментации талька менее применимо (там мощность на пикселях), но для image-level решений (3 класса, talc-vote) — да.",
+    "verdict": "reference",
+    "effort": "low",
+    "year": "2019",
+    "license": "n/a (method)",
+    "link": "https://pmc.ncbi.nlm.nih.gov/articles/PMC6837442/"
+   },
+   {
+    "name": "COSE: Conformal Segmentation via Conformal Risk Control (Mossina et al., CVPRW 2024)",
+    "kind": "code",
+    "summary": "Post-hoc conformal-risk на семантической сегментации: подбирает порог λ по softmax, формируя пиксельные prediction-sets с гарантией контроля риска на уровне α. MIT.",
+    "applicability": "Готовая MIT-реализация пиксельного conformal-risk (родственник Angelopoulos, но заточен под сегментацию) — можно взять как каркас, чтобы выдавать 'внутреннюю/внешнюю' маску талька с гарантией покрытия. Полезнее для карты неопределённости фаз, чем для скалярной доли (для доли берите convolt). Те же ограничения по шумному/крошечному калибру.",
+    "verdict": "reference",
+    "effort": "medium",
+    "year": "2024",
+    "license": "MIT",
+    "link": "https://github.com/deel-ai-papers/conformal-segmentation"
+   }
+  ],
+  "top_recommendations": [
+   "Переформулировать оценку доли талька как QUANTIFICATION LEARNING: внедрить ACC/PACC (или SLD/EM) из QuaPy вместо/поверх изотонической калибровки. Это делает bias-коррекцию доли под сдвигом приора оливковый↔тёмный и оценивается на МИЛЛИОНАХ пикселей, а не на 8 снимках — статистически мощно несмотря на крошечный val. Самый высокий ROI, низкая трудозатрата.",
+   "Честная оценка на 8 val: перцентильный bootstrap-CI + leave-one-out (код SegVal_Repo) и ЯВНАЯ демонстрация широкого интервала; плюс дисклеймер, что метрики против шумного/неполного GT смещены (label-noise-overestimation) — заранее очистить/переразметить 8 val через confident-learning (cleanlab-идея: искать сульфиды внутри синих контуров и незамеченный тальк).",
+   "Конформный интервал на площадную долю талька через convolt (Efficient Conformal Volumetry, CC-BY-4.0) для ГОСТ-порога >10% с гарантией покрытия. Узкое место — число надёжных калибровочных примеров (split-conformal на n=8 квантует покрытие 1/(n+1)); калибруйте на image-level долях / пиксельных счётчиках, и учтите шум меток по Sesia-2024, иначе гарантия смещена.",
+   "Домен оливковый↔тёмный лестницей 'дёшево→дорого': (1) match_histograms и FDA-свап низкочастотной амплитуды (training-free, ~15 строк, ФАЗА/структура сохраняется, использует ваши unlabeled без псевдометок); (2) RandStainNA-LAB / FACT-аугментация для домен-робастности; (3) AdaBN (пересчёт BN-статистик на тёмном домене, 0 параметров); CycleGAN/StainGAN — только если линейные методы не хватило, осторожно с несохранением прозрачного талька. Macenko/Vahadane НЕ применять — отражённый свет ≠ поглощающие красители.",
+   "TTA (флип/поворот/масштаб + лёгкая яркость, Wang 2019) на инференсе талька: стабилизирует крошечный val, усредняет оценку ДОЛИ и даёт пиксельную карту неопределённости там, где тальк прозрачен. Дёшево, безопасно, без переобучения."
+  ]
+ },
+ {
+  "angle": "Fresh SOTA (2024-2026) DL for ore/petrographic microscopy and transferable methods from metallography/histopathology, filtered to your four pains: weak/incomplete+noisy talc labels, transparent-talc-in-reflected-light, tiny/noisy val, lots of unlabeled panoramas + two-domain shift. I skipped things you already listed (LumenStone/petroscope, DINOv2/v3/Franca, micro-SAM/SAM2/SAMRefiner, GatedCRF, GCE, Reinhard, isotonic, ASTM E562) and only report genuinely newer/deeper items with concrete transfer paths. Note: most ore-microscopy DL is transmitted-light thin sections; reflected-light polished-section (аншлиф) DL is rare, so several strongest transfers come from metallography (opaque phases on gray matrix = your exact optical regime) and histopathology (incomplete-annotation theory).",
+  "findings": [
+   {
+    "name": "Positive-Unlabeled (PU) learning for segmentation/detection with incomplete annotations",
+    "kind": "method",
+    "year": "2021-2023",
+    "license": "papers open (MICCAI/MedIA); reference implementations on GitHub",
+    "link": "https://arxiv.org/abs/2302.08050",
+    "summary": "Reformulates the classification/CE loss so that UNLABELED pixels are treated as 'unknown' (a positive+negative mixture with class-prior pi) instead of being forced to the negative class. Developed for histopathology where only some positive cells are annotated and the rest of the image is unlabeled-not-negative. The negative-term of the loss is approximated from the labeled positives and the estimated prior.",
+    "applicability": "This is the exact theoretical match for your pain #1: talc is annotated only partially (incomplete), so the 'background' inside/around your non-closing blue contours is unlabeled, not true-negative. Your current pCE+GCE still implicitly pushes unlabeled talc pixels toward negative, which is precisely the label-noise you fight. Swap the negative branch of your talc loss for a PU-corrected term with a talc class-prior (you already estimate talc fraction, so you have pi). Cheapest high-leverage change; composable with your existing GCE q=0.7 and GatedCRF.",
+    "verdict": "adopt",
+    "effort": "medium"
+   },
+   {
+    "name": "EoMT — Encoder-only Mask Transformer (Your ViT is Secretly a Segmentation Model)",
+    "kind": "code",
+    "year": "2025",
+    "license": "code Apache/MIT-style on GitHub (tue-mps/eomt); also in HuggingFace transformers v5. DINOv2 backbones Apache-2.0; DINOv3 backbones carry Meta's restrictive license",
+    "link": "https://github.com/tue-mps/eomt",
+    "summary": "CVPR 2025 Highlight. Turns a PLAIN pretrained ViT (DINOv2/DINOv3) into a Mask2Former-style query-based mask transformer by dropping the pixel decoder + separate transformer decoder — queries are just extra tokens fed through the ViT. ~4x faster than Mask2Former at ViT-L, matches accuracy. DINOv3-EoMT reaches 58.9 PQ COCO / 59.5 mIoU ADE20K.",
+    "applicability": "You already run DINOv2 ViT-S/14 embeddings and separately a U-Net. EoMT lets you reuse that SAME frozen/finetuned DINO backbone as an end-to-end panoptic/semantic talc+sulfide+gangue segmenter without maintaining a second architecture — one model instead of your rules+U-Net+vote stack. Query-based masks also give you instance-level sulfide/talc regions for cleaner fraction quantification. Start with ViT-S DINOv2 weights you already have; try DINOv3-S later (mind license for a competition submission).",
+    "verdict": "try",
+    "effort": "medium"
+   },
+   {
+    "name": "MatSSL — self-supervised pretraining for metallographic segmentation",
+    "kind": "method",
+    "year": "2025",
+    "license": "arXiv preprint (open); check repo for weights",
+    "link": "https://arxiv.org/abs/2507.18184",
+    "summary": "Microstructure-specific SSL: pretrains a U-Net++ encoder on unlabeled metallographic images, then fine-tunes for phase segmentation. +3.2 mIoU on MetalDAM over ImageNet init and +2.76 over MoCoV2, effective in very low-data regimes.",
+    "applicability": "Metallography = reflected-light imaging of opaque phases on a gray matrix — optically the closest published analog to your polished аншлифы (much closer than transmitted-light thin sections). Two direct uses: (1) instead of the petroscope/LumenStone encoder, SSL-pretrain your talc U-Net encoder on your MANY unlabeled panoramas + ч2 folders using this microstructure-specific recipe, which directly attacks pain #4 (unlabeled data) without pseudo-label conflict; (2) the MetalDAM dataset itself is a free reflected-light pretraining corpus. This is the safe way to exploit unlabeled data (pretraining, not self-training).",
+    "verdict": "try",
+    "effort": "medium"
+   },
+   {
+    "name": "Oversized ore segmentation: SAM-enhanced U-Net with SSL pretraining AND semi-supervised self-training",
+    "kind": "paper",
+    "year": "2025",
+    "license": "Elsevier (paywalled abstract; method described)",
+    "link": "https://www.sciencedirect.com/science/article/abs/pii/S095741742501601X",
+    "summary": "Ore-domain pipeline that COMBINES self-supervised pretraining with semi-supervised self-training on a U-Net, using SAM to enhance masks. Reports it as a working recipe for ore images with scarce labels — i.e. exactly the SSL-pretrain-then-self-train ordering that stabilizes pseudo-labels.",
+    "applicability": "Direct post-mortem for your pain #4: your v6 self-training regressed (18.8 vs 10.2 MAE) because pseudo-labels conflicted with dense labels. This paper's ordering — SSL-pretrain first, then self-train with SAM-cleaned masks — is the recipe to retry. Key transfers: pretrain before pseudo-labeling (not after), gate pseudo-labels through SAM/SAMRefiner (you have it) so only high-confidence talc regions enter, and keep dense-labeled tiles at higher loss weight to avoid the conflict you saw. Abstract is paywalled; worth an interlibrary pull for the confidence/teacher-student details.",
+    "verdict": "try",
+    "effort": "high"
+   },
+   {
+    "name": "Transparent / non-opaque mineral detection in reflected-light polished sections (Filippo 2021; powder-mount Part 2 2023/24)",
+    "kind": "paper",
+    "year": "2021 / 2023",
+    "license": "Elsevier (paywalled); concept + results public",
+    "link": "https://www.sciencedirect.com/science/article/abs/pii/S0892687521002363",
+    "summary": "The only line of work that explicitly does DL segmentation of TRANSPARENT/non-opaque minerals in REFLECTED light, where mineral reflectance ~ epoxy/resin reflectance defeats thresholding. Filippo et al. (Minerals Eng. 2021) segment opaque vs non-opaque + resin; a 2023 'Part 2' powder-mount paper reports DL detecting ALL particles incl. transparent ones for unbiased quantification; related iron-ore work hits >90% with DeepLabV3+ separating transparent vs opaque.",
+    "applicability": "Direct proof-of-concept for your pain #2 (talc is transparent in reflected light, near-invisible in the dark ч2 domain). It shows a CNN CAN learn transparent phases in reflected light from subtle texture/relief cues rather than brightness — validating that your talc U-Net is not chasing a lost cause, and motivating relief/gradient/edge input channels (talc's cleavage relief) rather than intensity alone. No code, so it's a design reference, not a drop-in.",
+    "verdict": "reference",
+    "effort": "medium"
+   },
+   {
+    "name": "Prompt-Guided Multi-Task Learning for Petrographic Thin-section Segmentation (boundary + semantics)",
+    "kind": "paper",
+    "year": "2026",
+    "license": "arXiv nonexclusive-distrib 1.0 (open PDF)",
+    "link": "https://arxiv.org/pdf/2604.14805",
+    "summary": "ViT + SAM, jointly learns a boundary-detection task and a semantic-segmentation task. The boundary branch supplies weak supervision that reduces dependence on dense pixel labels, explicitly targeting 'sparse or incomplete ground truth annotations'.",
+    "applicability": "Your blue talc contours DON'T close — but they ARE boundary annotations. A multi-task head that supervises a boundary branch from the (open) contours + a semantic talc branch lets you USE the contour lines as-is instead of heuristically closing them. Boundary supervision also sharpens talc/sulfide edges where your incomplete masks are weakest. Pairs naturally with your GatedCRF (edge-aware) and with SAMRefiner mask closing.",
+    "verdict": "try",
+    "effort": "medium"
+   },
+   {
+    "name": "Deep mineralogical segmentation from QEMSCAN maps (Residual U-Net, PP+XP)",
+    "kind": "paper",
+    "year": "2025",
+    "license": "arXiv (open); no code/license stated",
+    "link": "https://arxiv.org/abs/2505.17008",
+    "summary": "Residual U-Net trained with QEMSCAN mineral maps as dense ground-truth labels, on registered plane- and cross-polarized inputs; predicts 6 phases and their modal fractions with R^2 > 0.97 (seen facies) / 0.88 (unseen). Uses automated-mineralogy maps to escape hand annotation.",
+    "applicability": "Two takeaways for you. (1) If you can obtain even a handful of SEM-EDS/QEMSCAN or MLA reference mounts of the same ores, use them as DENSE, objective talc labels to break out of the weak-blue-contour regime and to fix your tiny noisy val (pain #3) with a trustworthy quantitative reference. (2) It independently validates your fraction-quantification + isotonic-calibration approach: modal-fraction R^2 is the right target metric and near-linear predicted-vs-true is achievable. Data-gated (needs automated-mineralogy ground truth), hence reference not adopt.",
+    "verdict": "reference",
+    "effort": "high"
+   },
+   {
+    "name": "SAM-Mask2Former with Label-Fusion Progressive training (ore/rock particles, complex illumination)",
+    "kind": "paper",
+    "year": "2025",
+    "license": "Elsevier (paywalled abstract)",
+    "link": "https://www.sciencedirect.com/science/article/abs/pii/S095741742502915X",
+    "summary": "Fuses SAM with Mask2Former for ore/rock particle segmentation; a 'Label-Fusion Progressive' curriculum makes the network robust to strongly varying illumination, widening the usable illumination range by ~69% and reaching Box mAP >0.844 / Segm mAP >0.870.",
+    "applicability": "Targets your pain #5 (two acquisition domains: olive ч1 vs dark ч2). The Label-Fusion Progressive idea — progressively mixing labels/appearances during training so one model spans lighting regimes — is a lighter-weight alternative to your Reinhard transfer and to full domain adaptation, and it's demonstrated on ore specifically. Also a concrete SAM+Mask2Former integration pattern if you go the EoMT/mask-transformer route. Abstract-only; extract the curriculum schedule via ILL.",
+    "verdict": "reference",
+    "effort": "high"
+   },
+   {
+    "name": "DINOv3 dense-feature upgrade path: SegDINO / Dino U-Net / EoMT-DINOv3 (frozen backbone + light decoder)",
+    "kind": "model",
+    "year": "2025",
+    "license": "DINOv3 weights: Meta DINOv3 License (commercial/redistribution restrictions — check before competition submission); decoder papers open",
+    "link": "https://arxiv.org/pdf/2508.20909",
+    "summary": "DINOv3 adds Gram-Anchoring regularization that fixes the dense-patch-feature degradation of DINOv2, so a single FROZEN backbone + tiny MLP/U-Net decoder now sets SOTA on dense tasks with minimal labels (SegDINO, Dino U-Net). Few-shot medical-seg papers confirm strong low-label transfer.",
+    "applicability": "You already use DINOv2 ViT-S/14 only for image-level embeddings. The new result is that DINOv3 FROZEN dense features + a lightweight decoder give strong PIXEL segmentation with very few labels — ideal for your tiny/noisy talc set (pains #1,#3). Cheapest experiment: freeze DINOv3-S, train a small decoder on your dense-labeled tiles, compare talc MAE vs the petroscope U-Net. Watch the DINOv3 license for a submitted solution; DINOv2/Franca stay permissive fallbacks.",
+    "verdict": "try",
+    "effort": "medium"
+   },
+   {
+    "name": "Multi-angle rotation / extinction as input channels: Extinction Consistency Perception Network + Menoufia 72-rotation XPL/PPL dataset",
+    "kind": "method",
+    "year": "2023 / 2025",
+    "license": "ECPN: Springer (paywalled); Menoufia MUMDMC2025: Nature Sci Data, open (CC)",
+    "link": "https://link.springer.com/article/10.1007/s40747-023-01208-y",
+    "summary": "ECPN feeds a STACK of images taken at multiple stage-rotation angles and enforces extinction-consistency to build edge-enhanced features, plus a distance-map-penalized compound loss for grain edges (0.940 ODS). Menoufia MUMDMC2025 provides 14,400 photomicrographs at 72 rotation angles under PPL+XPL — a ready multimodal rotation corpus.",
+    "applicability": "This is the 'polarization/rotation as channels' idea from your brief. IF your acquisition can capture a few analyzer/stage rotations, stacking them as extra channels would make anisotropic phases pop — BUT note the catch: talc anisotropy and extinction are XPL/transmitted-light phenomena; your regime is reflected-light polished sections where this is much weaker. So treat rotation-channel fusion as a possible acquisition upgrade, and the distance-map-penalized boundary loss as a transferable trick for talc contours. Menoufia is transmitted-light, so pretrain/aug only, not in-domain.",
+    "verdict": "pretrain-only",
+    "effort": "medium"
+   },
+   {
+    "name": "Direct modal-mineralogy regression from images via transfer learning (drill core)",
+    "kind": "paper",
+    "year": "2024",
+    "license": "arXiv (open)",
+    "link": "https://arxiv.org/pdf/2403.18495",
+    "summary": "Predicts continuous mineral-content percentages directly from images with a transfer-learned CNN regressor, bypassing pixel segmentation entirely for the quantification target.",
+    "applicability": "An alternative to your segment-then-count pipeline for the talc-% -> class decision: a direct image-level talc-fraction regressor (you already do an image-level talc-vote with DINOv2+LogReg) trained against your isotonic-calibrated fractions. Useful as a second, segmentation-free estimator to ensemble against your U-Net fraction — reduces variance on the tiny val (pain #3) and sidesteps the transparent-talc pixel problem (pain #2).",
+    "verdict": "reference",
+    "effort": "low"
+   },
+   {
+    "name": "Automated ore-texture classification via unsupervised ML on µ-XRF, correlated to hardness (process mineralogy)",
+    "kind": "paper",
+    "year": "2025",
+    "license": "Elsevier (paywalled)",
+    "link": "https://www.sciencedirect.com/science/article/pii/S0892687525005722",
+    "summary": "Unsupervised clustering of ore texture from µ-XRF maps, shown to correlate with surface hardness — a numeric, objective texture descriptor linked to a processing-relevant property.",
+    "applicability": "Conceptual support for your end task (рядовая/труднообогатимая/оталькованная is a processability call). It argues texture — not just modal talc% — carries obогатимость signal, suggesting you add unsupervised texture features (or DINO-feature clusters) of sulfide/gangue intergrowth as inputs to your composite classification rule, especially to separate 'труднообогатимая' where the ГОСТ talc>10% rule doesn't fire. Needs µ-XRF for the exact method, so reference-level.",
+    "verdict": "reference",
+    "effort": "high"
+   },
+   {
+    "name": "Mixed-domain semi-supervised segmentation with pseudo-label conflict handling (MiDSS/BCMDA family)",
+    "kind": "method",
+    "year": "2025-2026",
+    "license": "arXiv (open)",
+    "link": "https://arxiv.org/pdf/2603.24691",
+    "summary": "Medical-imaging line explicitly named 'mixed-domain semi-supervised segmentation': labeled data from few domains, unlabeled from many, with methods that stabilize pseudo-labels ACROSS a domain gap (intermediate/mixed samples, correlation-map alignment) to prevent the labeled-vs-pseudo conflict.",
+    "applicability": "Names your exact failure mode: labeled (olive ч1) + unlabeled (dark ч2) with a domain gap makes naive pseudo-labels conflict with dense labels — the mechanism behind your v6 regression. The transferable tricks: generate intermediate/mixed-domain samples (Reinhard-interpolated ч1<->ч2 you can already produce) to bridge the gap before trusting pseudo-labels, and decouple the labeled and pseudo losses. Domain is medical, so adapt not adopt.",
+    "verdict": "reference",
+    "effort": "high"
+   },
+   {
+    "name": "Multi-channel attention / channel cross-fusion transformer for rock-mineral instance segmentation",
+    "kind": "paper",
+    "year": "2024",
+    "license": "open access (Elsevier/KeAi, S2307187724000993)",
+    "link": "https://www.sciencedirect.com/science/article/pii/S2307187724000993",
+    "summary": "Instance segmentation of rock minerals from MULTI-CHANNEL images using channel-attention + a channel-based cross-fusion transformer; +1.88 box mAP / +5.16 mask mAP over baseline by learning cross-channel interactions.",
+    "applicability": "A concrete transformer recipe for fusing heterogeneous channels — directly relevant if you feed talc-informative channels (LAB, relief/gradient, DINO features, or rotation frames) into one segmenter. The channel-attention cross-fusion block is a lightweight module you can bolt onto your U-Net/EoMT to weight which channel exposes transparent talc in each domain (helps pains #2 and #5). Open access, so implementable.",
+    "verdict": "try",
+    "effort": "medium"
+   }
+  ],
+  "top_recommendations": [
+   "Fix the loss, not the labels: reformulate your talc pCE+GCE as Positive-Unlabeled (arXiv 2302.08050) using your estimated talc prior, so unlabeled pixels inside/around the non-closing blue contours stop being punished as negative. Lowest-effort, highest-leverage move against pain #1 and composable with GCE+GatedCRF+SAMRefiner.",
+   "Exploit the unlabeled panoramas the SAFE way — SSL pretraining, not self-training. Use MatSSL-style microstructure SSL (arXiv 2507.18184) on your ч2 + panorama folders (metallography is the closest reflected-light analog), then fine-tune. If you re-attempt self-training, copy the ore-domain ordering from the SAM-enhanced U-Net paper (S095741742501601X): SSL-pretrain FIRST, gate pseudo-labels through SAMRefiner, keep dense-labeled tiles up-weighted — the recipe that avoids your v6 regression.",
+   "Consolidate your rules+U-Net+vote stack into one mask-transformer on the DINO backbone you already run: try EoMT (github.com/tue-mps/eomt) with your DINOv2 ViT-S, and separately benchmark a frozen DINOv3-S + lightweight decoder (SegDINO/Dino U-Net) for few-label talc segmentation — mind the DINOv3 license for a submitted solution.",
+   "Turn your open blue contours into supervision instead of fighting them: add a boundary + semantic multi-task head (arXiv 2604.14805) so the contour lines train a boundary branch directly, and add channel-attention cross-fusion (S2307187724000993) to let the model pick the channel (LAB / relief-gradient / DINO) that reveals transparent talc per domain — attacking pains #2 and #5.",
+   "De-risk the tiny noisy val (pain #3): pursue even a few SEM-EDS/QEMSCAN reference mounts as objective dense talc labels (validated by the QEMSCAN-U-Net R^2>0.97 result, arXiv 2505.17008), and add a segmentation-free image-level talc-% regressor (à la arXiv 2403.18495) to ensemble against your U-Net fraction for a more stable talc>10% ГОСТ decision."
+  ]
+ }
+]

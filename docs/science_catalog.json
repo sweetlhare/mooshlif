@@ -1,0 +1,1150 @@
+[
+ {
+  "angle": "КИТАЙСКОЯЗЫЧНАЯ (中文) научная литература по工艺矿物学 (process mineralogy) магматических Cu-Ni сульфидных руд и по автоматическому/оптическому анализу руд. Китайский корпус исключительно силён для нашей задачи по четырём причинам: (1) месторождения Цзиньчуань (金川) и Хунцилин (红旗岭) — прямой минералогический аналог Норильской группы (пирротин-пентландит-халькопирит-магнетит, те же структуры распада), и по ним много детальной 工艺矿物学; (2) депрессия талька/серпентина/хлорита в флотации Cu-Ni руд — отдельная развитая тема (прямо про наш «оталькованный» класс); (3) есть эталонная работа по глубокому обучению для сегментации именно РУДНЫХ минералов в ОТРАЖЁННОМ свете (徐述腾 2018, U-Net, 4 сульфида, 91%); (4) автоматическая минералогия (MLA/AMICS/QEMSCAN) в китайских работах прямо связывает единичное раскрытие/срастания/размер вкрапленности с извлечением — то есть с обогатимостью. Запросы велись на китайском в CNKI-индексируемых журналах и Baidu; отобраны только реально найденные, проверенные по первоисточнику работы.",
+  "papers": [
+   {
+    "title_original": "基于深度学习的镜下矿石矿物的智能识别实验研究",
+    "title_translation": "Экспериментальное исследование интеллектуального распознавания рудных минералов под микроскопом на основе глубокого обучения",
+    "authors": "徐述腾 (Сюй Шутэн), 周永章 (Чжоу Юнчжан)",
+    "year": "2018",
+    "venue": "岩石学报 (Acta Petrologica Sinica), 34(11): 3244–3252",
+    "link": "http://www.ysxb.ac.cn/article/id/5ff2ce8fbfedb51e1a6ae2bf",
+    "language": "中文 (китайский)",
+    "scientific_insight": "Эталонная китайская работа по семантической сегментации именно РУДНЫХ минералов в ОТРАЖЁННОМ свете (矿相显微镜). Модель U-Net (на базе VGG/Inception/ResNet, TensorFlow) обучена распознавать 4 сульфида — пирит, халькопирит, галенит, сфалерит — по панорамным снимкам аншлифов золоторудных месторождений Цзяпигоу и Шиху. Из 150 исходных снимков аугментацией (зеркальное отражение + случайная обрезка) получено >9000 изображений и 9682 ROI (513×513 px), разметка вручную в Photoshop, 10-кратная кросс-валидация. Точность на тесте ~91.38% (пирит 92.85%, халькопирит 91.63%, галенит 94.03%, сфалерит 90.25%). Вывод: CNN автоматически извлекает глубокие признаки минералов в отражённом свете без ручного дизайна признаков.",
+    "relevance": "Прямой методический прототип для нашего пиксельного разбора панорам отражённого света: доказывает, что пирротин/пентландит/халькопирит-подобные фазы уверенно сегментируются U-Net. Основа для количественной оценки liberation/association (доля единичных зёрен vs. сросшихся) — параметров, по которым и различаются рядовая/труднообогатимая руды."
+   },
+   {
+    "title_original": "基于深度学习的矿石图像处理研究综述",
+    "title_translation": "Обзор обработки изображений руды на основе глубокого обучения",
+    "authors": "王伟 (Ван Вэй), 李擎 (Ли Цин), 张德政 (Чжан Дэчжэн), 栗辉 (Ли Хуэй), 王昊 (Ван Хао)",
+    "year": "2023",
+    "venue": "工程科学学报 (Chinese Journal of Engineering / USTB), DOI 10.13374/j.issn2095-9389.2022.01.23.001",
+    "link": "http://cje.ustb.edu.cn/article/doi/10.13374/j.issn2095-9389.2022.01.23.001",
+    "language": "中文 (китайский)",
+    "scientific_insight": "Систематический обзор задач обработки изображений руды глубоким обучением: (1) классификация руды — деление на одно-/многообъектную (одиночная = сети классификации, множественная = детекция + сегментация); (2) анализ гранулометрии (粒度) — статистика распределения, классификация классов крупности, детекция негабарита; (3) распознавание посторонних включений. Показано, что DL превосходит классические методы обработки (пороги, морфология, ручные признаки) на задачах категории и крупности для железных, угольных, каменных руд.",
+    "relevance": "Дорожная карта архитектур для нашего пайплайна: связывает задачу «классификация руды» с необходимостью сегментации + детекции, а не только классификации всего снимка. Гранулометрический блок напрямую отвечает за оценку крупности сульфидов (крупные = рядовая, тонкая эмульсионная вкрапленность = труднообогатимая)."
+   },
+   {
+    "title_original": "基于机器学习的矿物智能识别方法研究进展与展望",
+    "title_translation": "Прогресс и перспективы методов интеллектуального распознавания минералов на основе машинного обучения",
+    "authors": "коллектив (地球科学 / China University of Geosciences)",
+    "year": "2021",
+    "venue": "地球科学 (Earth Science), DOI 10.3799/dqkx.2020.360",
+    "link": "http://www.earth-science.net/article/doi/10.3799/dqkx.2020.360",
+    "language": "中文 (китайский)",
+    "scientific_insight": "Обзор методов ML-распознавания минералов по разным типам данных — оптическая микроскопия (прозрачные и отражённые шлифы), спектральные и геохимические данные; сравниваются классические классификаторы и глубокие сети, обсуждаются признаки, наборы данных и ограничения (малые размеченные выборки, вариативность освещения/полировки, схожесть отражательной способности близких фаз).",
+    "relevance": "Контекст состояния области в Китае: подтверждает, что автоматическое распознавание минералов по оптике — устойчивое научное направление, и очерчивает типовые проблемы (нехватка размеченных данных, влияние качества полировки/освещения), с которыми столкнётся наш классификатор аншлифов."
+   },
+   {
+    "title_original": "某含滑石低品位铜镍矿浮选试验研究",
+    "title_translation": "Исследование флотации некоторой низкосортной талькосодержащей медно-никелевой руды",
+    "authors": "冯泽平 (Фэн Цзэпин), 谈伟军 (Тань Вэйцзюнь)",
+    "year": "2014",
+    "venue": "矿产保护与利用 (Conservation and Utilization of Mineral Resources), 2014(4)",
+    "link": "https://www.cgsjournals.com/article/id/kcbhyly_kcbhyly201404008",
+    "language": "中文 (китайский)",
+    "scientific_insight": "Кейс именно ТАЛЬКОСОДЕРЖАЩЕЙ бедной Cu-Ni руды (Ni 0.78%, Cu 0.16%). Установлено: полезные минералы тесно срастаются и вкраплены неравномерно, а высокое содержание талька и др. слоистых силикатов ведёт к переошламованию (易泥化) — это ключевая причина трудной селекции. Решение — трёхстадийная схема «коллективная флотация талька+Cu-Ni → разделение Cu/Ni → доизвлечение Ni из хвостов»: Cu-концентрат 24.41% Cu (извлеч. 47.50%), Ni-концентрат 8.20% Ni (извлеч. 77.43%).",
+    "relevance": "Прямо про наш «оталькованный» класс: количественно показывает, что тальк природно флотируется, ошламовывается и загрязняет концентрат, снижая качество и извлечение Ni — и что требуется специальная схема с предварительной депрессией/выводом талька. Обосновывает выделение оталькованных руд в отдельный технологический класс."
+   },
+   {
+    "title_original": "蛇纹石、绿泥石、滑石的可浮性及抑制方法综述",
+    "title_translation": "Обзор флотируемости и методов депрессии серпентина, хлорита и талька",
+    "authors": "赵玉卿 (Чжао Юйцин), 黄斌雄 (Хуан Биньсюн), 刘磊 (Лю Лэй), 孙晓华 (Сунь Сяохуа), 熊鑫 (Сюн Синь)",
+    "year": "2018",
+    "venue": "矿冶工程 (Mining and Metallurgical Engineering) / 矿产综合利用",
+    "link": "https://www.cgsjournals.com/article/id/kczhly_kczhly201802002",
+    "language": "中文 (китайский)",
+    "scientific_insight": "Механистический обзор трёх магнезиальных силикатов, вредных в флотации сульфидов. Ключевое: природная флотируемость талька и хлорита обусловлена кристаллоструктурой — при раскалывании по спайности обнажаются гидрофобные базальные (силоксановые) грани, поэтому тальк флотируется без собирателя. Серпентин, хлорит и тальк дают разное флотационное поведение и требуют разных депрессоров; систематизированы типы реагентов (неорганические — жидкое стекло, гексаметафосфат Na; органические — КМЦ/полисахариды) и механизмы их адсорбции для селективной депрессии.",
+    "relevance": "Минералогическое ПОЧЕМУ для оталькованного класса: объясняет, что именно строение талька/серпентина (спайность → гидрофобная поверхность) депрессирует извлечение Ni. Даёт основу для трактовки доли слоистых силикатов на снимке как предиктора обогатимости и выбора депрессоров."
+   },
+   {
+    "title_original": "硫化矿浮选中滑石抑制剂的研究进展",
+    "title_translation": "Прогресс исследований депрессоров талька при флотации сульфидных руд",
+    "authors": "коллектив (矿产保护与利用)",
+    "year": "2020",
+    "venue": "矿产保护与利用 (Conservation and Utilization of Mineral Resources)",
+    "link": "http://www.xml-data.cn/KCBHYLY/html/7a0230bb-aba2-4951-a7e3-6c78703e6886.htm",
+    "language": "中文 (китайский)",
+    "scientific_insight": "Обзор именно депрессоров талька в сульфидной флотации: при разделении Cu/Ni/Mo-сульфидов и талька (силикатная порода той же гидрофобности) наиболее употребимы неорганические депрессоры — жидкое стекло и гексаметафосфат натрия и их комбинации; из органических — КМЦ, гуаровая камедь и другие полисахариды, избирательно адсорбирующиеся на тальке за счёт водородных связей с гидроксильными краями. Подчёркивается трудность депрессии из-за природной гидрофобности базальных граней талька.",
+    "relevance": "Дополняет оталькованный класс со стороны технологии: показывает, что тальк — целенаправленно депрессируемая, но «упрямая» фаза, чьё содержание критично для схемы флотации. Подтверждает целесообразность отдельной ветки обработки для оталькованных руд."
+   },
+   {
+    "title_original": "工艺矿物学研究的新技术与新理念",
+    "title_translation": "Новые технологии и концепции в исследованиях процессной минералогии",
+    "authors": "肖仪武 (Сяо Иу), 方明山 (Фан Миншань), 付强 (Фу Цян), 叶小璐 (Е Сяолу), 马楠 (Ма Нань)",
+    "year": "2018",
+    "venue": "矿产保护与利用 (Conservation and Utilization of Mineral Resources), 2018(3): 49–54, DOI 10.13779/j.cnki.issn1001-0076.2018.03.009",
+    "link": "https://html.rhhz.net/KCBHYLY/html/45914c74-828a-41f1-b1bc-517f0ead33b3.htm",
+    "language": "中文 (китайский)",
+    "scientific_insight": "Обзор инструментария автоматической процессной минералогии (QEMSCAN, MLA, AMICS — все на базе СЭМ+ЭДС, плюс LA-ICP-MS и TOF-SIMS). Автоматически измеряются: степень единичного раскрытия (单体解离度), крупность вкрапленности (嵌布粒度), относительное содержание минералов, характер срастаний (连生关系), форма нахождения элемента и теоретическое извлечение. Показано на примере: когда 75.90% зёрен золота имеют размер 1–5 мкм, сверхтонкая вкрапленность не раскрывается при измельчении и извлечение падает до ~80% — то есть параметр «крупность вкрапленности + раскрытие» напрямую задаёт достижимое извлечение.",
+    "relevance": "Даёт КОЛИЧЕСТВЕННЫЙ язык обогатимости, которым описываются наши 3 класса: liberation degree, grain size, association, theoretical recovery. Именно эти текстурные параметры (крупные раскрытые зёрна vs. тонкие срастания) объективно разделяют рядовую и труднообогатимую руду; их и должен воспроизводить наш оптический классификатор."
+   },
+   {
+    "title_original": "一种贫难选镍铜矿的异步同选工艺 (专利 CN111282710B)",
+    "title_translation": "Способ асинхронной совместной флотации бедной труднообогатимой никель-медной руды (патент CN111282710B)",
+    "authors": "谢杰, 江敏, 李建博, 赵寿红, 吴越 (金川集团 / Jinchuan Group)",
+    "year": "2021",
+    "venue": "Патент КНР CN111282710B (金川集团股份有限公司)",
+    "link": "https://patents.google.com/patent/CN111282710B/zh",
+    "language": "中文 (китайский)",
+    "scientific_insight": "Детально документирует ПОЧЕМУ руда труднообогатима на реальном Цзиньчуаньском сырье (Ni 0.45–0.65%, Cu 0.38–0.54%): рудных минералов всего ~6.0% (пентландит+миллерит ~1%, халькопирит ~0.9%), а вкрапленность крайне тонкая — 60.97% пентландита в классе <0.04 мм, из-за чего единичное раскрытие затруднено; окисленность высокая — ~22.6% Ni рассеяно в виде оксидов в силикатах и флотацией не извлекается; серпентин, хлорит, доломит легко флотируются, а тальк из-за слоистой структуры даёт тончайшие чешуйки с сильным сродством к реагентам и засоряет концентрат. Решение — асинхронная схема с предварительной гидроциклонной классификацией (пески грубые/богатые → 1-я флотация; слив тонкий/бедный → 2-я флотация), извлечение Ni 73.23%, Cu 79.34%.",
+    "relevance": "Прямое минералого-технологическое обоснование ТРУДНООБОГАТИМОГО класса: тонкая эмульсионная вкрапленность (<40 мкм) + вторичное окисление/замещение + слоистые силикаты (тальк/серпентин) = плохое раскрытие и низкое извлечение. Перечисляет ровно те текстурные признаки, что мы должны детектировать по оптике, чтобы отличить труднообогатимую руду от рядовой."
+   },
+   {
+    "title_original": "高镍铜镍矿床的特征、形成机制与勘查展望",
+    "title_translation": "Характеристики, механизм образования и перспективы поисков высоконикелевых медно-никелевых месторождений",
+    "authors": "коллектив (岩石学报 / Acta Petrologica Sinica)",
+    "year": "2018",
+    "venue": "岩石学报 (Acta Petrologica Sinica), 2018, ст. 20180814",
+    "link": "http://html.rhhz.net/ysxb/20180814.htm",
+    "language": "中文 (китайский)",
+    "scientific_insight": "Описывает рудные парагенезисы и микроструктуры Cu-Ni сульфидов, тождественные Норильским: ассоциации пентландит–магнетит–халькопирит. Магнетит встречается в трёх текстурных типах — (1) пластинчатые вростки распада (exsolution) в пирротине шириной 10–20 мкм с шагом 2–30 мкм; (2) неправильные вростки замещения (replacement) во вкрапленных и «губчатых» рудах; (3) чистый пирротин. Пламевидные (火焰状) тела распада пентландита ориентированы субпараллельно пластинам магнетита. Часть Ni сидит в решётке пирротина как изоморфная примесь (类质同象).",
+    "relevance": "Минералогическая основа текстурных признаков обогатимости: пламевидные структуры распада пентландита и Ni в решётке пирротина означают, что часть Ni физически не раскрывается измельчением — это ядро труднообогатимости. Помогает интерпретировать тонкие эмульсионные/ламеллярные текстуры на наших снимках как маркер труднообогатимого класса."
+   },
+   {
+    "title_original": "微细粒矿物分选技术研究进展",
+    "title_translation": "Прогресс технологий обогащения тонкодисперсных минералов",
+    "authors": "коллектив (矿产保护与利用)",
+    "year": "2019",
+    "venue": "矿产保护与利用 (Conservation and Utilization of Mineral Resources)",
+    "link": "https://html.rhhz.net/KCBHYLY/html/5fed2c95-7d5d-4fa7-a1e7-1c3705c04f3a.htm",
+    "language": "中文 (китайский)",
+    "scientific_insight": "Объясняет физику низкого извлечения тонких частиц: микрочастицы имеют малую массу и большую удельную поверхность, отчего в пульпе у них малый импульс и низкая вероятность столкновения с пузырьком; они не преодолевают энергетический барьер прилипания к пузырьку, и флотационное извлечение падает. Отсюда — необходимость особых приёмов (флокуляция, масляная агрегация, специальная гидродинамика) для тонковкрапленных руд.",
+    "relevance": "Дополняет причинно-следственную цепочку труднообогатимости: даже при удачном раскрытии тонкие сульфидные зёрна плохо флотируются в принципе. Обосновывает, почему тонкая эмульсионная вкрапленность (видимая на снимке как мелкие рассеянные сульфиды) — прямой признак труднообогатимого класса, а не просто вопрос степени измельчения."
+   }
+  ],
+  "key_insights": [
+   "Три класса обогатимости в китайской 工艺矿物学 объясняются ТЕКСТУРНО-КОЛИЧЕСТВЕННО: рядовая = крупные раскрытые сульфидные зёрна и простые срастания (высокая 单体解离度 при обычном измельчении); труднообогатимая = тонкая/эмульсионная вкрапленность <40 мкм, пламевидные структуры распада пентландита в пирротине и Ni-изоморфизм в решётке пирротина + вторичное окисление/замещение (плохое раскрытие → падение извлечения до ~80% и ниже); оталькованная = >порогового содержания талька/серпентина, которые природно гидрофобны и депрессируют флотацию Ni.",
+   "Месторождения Цзиньчуань (金川) и Хунцилин (红旗岭) — прямой китайский аналог Норильской группы (пирротин-пентландит-халькопирит-магнетит, те же exsolution/replacement-текстуры), поэтому их обширная 工艺矿物学 напрямую переносима на нашу задачу и служит готовым источником минералогических эталонов.",
+   "Природная флотируемость талька имеет чёткое кристаллоструктурное объяснение (赵玉卿 и др.): при раскалывании по спайности обнажаются гидрофобные базальные силоксановые грани — тальк флотируется без собирателя, ошламовывается (易泥化) и загрязняет концентрат. Это минералогическое ПОЧЕМУ отдельного оталькованного класса; депрессия требует жидкого стекла/гексаметафосфата/КМЦ.",
+   "Есть эталонный китайский метод под нашу модальность съёмки: 徐述腾 & 周永章 (2018, Acta Petrologica Sinica) применили U-Net к панорамам аншлифов в ОТРАЖЁННОМ свете и сегментировали пирит/халькопирит/галенит/сфалерит с точностью ~91% из всего 150 исходных снимков (аугментация до >9000). Это прямой прототип нашего пиксельного анализа сульфидов.",
+   "Автоматическая минералогия (MLA/QEMSCAN/AMICS) в китайских работах даёт операциональный набор признаков обогатимости — 单体解离度 (liberation), 嵌布粒度 (grain size), 连生关系 (association), теоретическое извлечение. Именно эти параметры разделяют рядовую и труднообогатимую руду, и именно их должен воспроизводить оптический классификатор по панорамам.",
+   "Труднообогатимость — двойная (патент Цзиньчуань CN111282710B + обзор тонкодисперсной флотации): (а) тонкая вкрапленность физически не раскрывается измельчением, и (б) даже раскрытые микрозёрна плохо флотируются из-за малого импульса и низкой вероятности прилипания к пузырьку. Значит, мелкие рассеянные сульфиды на снимке — надёжный визуальный маркер труднообогатимого класса, а не просто следствие помола.",
+   "Практический вывод для признаков модели: помимо доли и крупности сульфидов, диагностически важны (1) доля/связность талька-серпентина-хлорита (оталькованный класс), (2) степень замещения сульфидов вторичными/тёмными фазами и окисление (труднообогатимый), (3) характер срастаний и пламевидно-ламеллярные текстуры распада (труднообогатимый) — все три извлекаются из отражённого света и подтверждены китайскими первоисточниками.",
+   "Ограничения, отмеченные в китайских обзорах ML-распознавания минералов: малые размеченные выборки, вариативность освещения и качества полировки, близость отражательной способности некоторых фаз — эти же риски актуальны для нашего датасета аншлифов и требуют аугментации/нормализации, как в 徐述腾 (2018)."
+  ]
+ },
+ {
+  "angle": "English-language process/technological mineralogy of magmatic Cu-Ni sulfide ores (pentlandite–pyrrhotite–chalcopyrite ± magnetite, Norilsk/Sudbury/Nkomati/Dumont type): the scientific basis for why ore TEXTURE (net-textured vs disseminated vs massive vs blebby; exsolution/emulsion intergrowth; sulfide replacement/alteration; talc-serpentine gangue) controls liberation, mineral association and grade-recovery — i.e. the mineralogical-metallurgical foundation of the three processability classes (run-of-mill / hard-to-treat / talc-rich), plus quantitative automated ORE-IMAGE analysis in reflected light (multispectral AOM, morphometry, deep-learning segmentation) as methods to measure those texture features from panoramic optical micrographs.",
+  "papers": [
+   {
+    "title_original": "Influence of mineralogy and ore texture on pentlandite flotation at the Nkomati nickel mine, South Africa",
+    "title_translation": "Влияние минералогии и текстуры руды на флотацию пентландита на никелевом руднике Нкомати (ЮАР)",
+    "authors": "G. Mishra, K.S. Viljoen, H. Mouri",
+    "year": "2013",
+    "venue": "Minerals Engineering, vol. 54, pp. 63–78 (Elsevier)",
+    "link": "https://www.sciencedirect.com/science/article/abs/pii/S0892687513001143",
+    "language": "English",
+    "scientific_insight": "On 29 samples from the Main Mineralised Zone (Pit 3), flotation response for Ni grade and cumulative Ni recovery is shown to be a COMPLEX FUNCTION of ore mineralogy AND ore texture, not grade alone. Established textural controls: (1) flotation order is chalcopyrite first, then pentlandite, then pyrrhotite when Cp dominates or Pn/Po/Cp are subequal; (2) in samples with HIGH pyrrhotite-to-pentlandite ratio, pyrrhotite floats earlier than expected and DEPRESSES pentlandite recovery (galvanic/surface interaction) — a texture+modal signature of poorer recovery; (3) pentlandite finely disseminated/exsolved within pyrrhotite has limited liberation, tying fine intergrowth directly to low Ni recovery. MLA of ore and concentrates links texture archetype to the measured grade-recovery curve.",
+    "relevance": "Directly the peer-reviewed foundation for our 'рядовая vs труднообогатимая' split: it quantifies, for the SAME mineral system (Pn-Po-Cp), how coarse simple textures give good recovery while fine exsolution/replacement intergrowth and high pyrrhotite depress Ni. Provides the reflected-light-visible texture classes (net-textured, disseminated, massive, blebby) our labels correspond to."
+   },
+   {
+    "title_original": "Using Process Mineralogy as a Tool to Investigate Blending Potential of the Pentlandite-Bearing Ores at the Nkomati Ni Mine in South Africa",
+    "title_translation": "Использование технологической минералогии для оценки возможности шихтования пентландитсодержащих руд рудника Нкомати (ЮАР)",
+    "authors": "Nkomati / Univ. Johannesburg process-mineralogy group",
+    "year": "2022",
+    "venue": "Minerals (MDPI), 12(5), 649",
+    "link": "https://doi.org/10.3390/min12050649",
+    "language": "English",
+    "scientific_insight": "Thirteen mineralogically and texturally different Ni-sulfide ore types (medium- and high-grade bleb, disseminated, massive, semi-massive and net-textured) show that grind size needed for good recovery is set by texture: a grind of P77 at 75 µm maximised pentlandite LIBERATION and gave the best Ni recoveries (84–88 %, grades 5.3–5.6 %) in the MMZ ores. It formalises the rule that ore must be milled to (but not finer than) the optimum liberation size — overgrinding of already-liberated pentlandite reduces flotation recovery — and quantifies erratic plant recovery as a consequence of texture variability, motivating texture-based blending/domaining.",
+    "relevance": "Shows the practical geometallurgical consequence of our classes: each texture type has a different optimum liberation grind, and fine/net textures need finer grinding yet still lose Ni. Supports treating 'truднообогатимая' as a distinct processing domain and justifies texture classification from images as an input to blending decisions."
+   },
+   {
+    "title_original": "Sulfide-silicate textures in magmatic Ni-Cu-PGE sulfide ore deposits: Disseminated and net-textured ores",
+    "title_translation": "Сульфидно-силикатные текстуры магматических Ni-Cu-PGE сульфидных руд: вкрапленные и сетчатые (net-textured) руды",
+    "authors": "S.J. Barnes and colleagues",
+    "year": "2017",
+    "venue": "American Mineralogist / Ore geology literature",
+    "link": "https://www.academia.edu/32398088/Sulfide_silicate_textures_in_magmatic_Ni_Cu_PGE_sulfide_ore_deposits_Disseminated_and_net_textured_ores",
+    "language": "English",
+    "scientific_insight": "Defines the genetic texture continuum for exactly this ore family: mineralisation is classed as disseminated, matrix/net-textured, or massive depending on the combination of sulfide fraction and silicate framework texture. Disseminated = isolated sulfide blebs between cumulus silicates; net-textured = interstitial sulfide film wrapping silicate grains; massive = sulfide-dominant. This is the mineralogical origin of the grain-size / association differences that later govern liberation.",
+    "relevance": "Gives the geological vocabulary and physical model behind the panoramic reflected-light textures we classify. Net-textured/disseminated blebs correspond to different sulfide grain spacing and gangue association, which is the upstream cause of 'easy' vs 'hard' liberation in downstream milling."
+   },
+   {
+    "title_original": "Morphometric parameters of sulphide ores as a basis for selective ore dressing (Морфометрические параметры сульфидных руд как основа селективного обогащения руд)",
+    "title_translation": "Morphometric parameters of sulphide ores as a basis for selective ore dressing",
+    "authors": "A.M. Duryagina, I.V. Talovina, H. Lieberwirth, R.K. Ilalova",
+    "year": "2022",
+    "venue": "Journal of Mining Institute (Zapiski Gornogo Instituta), vol. 256, pp. 527–538; DOI 10.31897/PMI.2022.76",
+    "link": "https://pmi.spmi.ru/pmi/article/view/15841",
+    "language": "English (Russian journal, bilingual)",
+    "scientific_insight": "On disseminated and rich cuprous ores from the OKTYABRSKY deposit (Norilsk district), quantitative grain morphometry was measured by optical microscopy (Thixomet Pro) and X-ray micro-CT (SkyScan-1173). The most diagnostic parameters are grain AREA, PERIMETER, EDGE ROUGHNESS, SHAPE FACTOR/SPHERICITY, ELONGATION and AVERAGE INTER-GRAIN SPACING for disseminated Cu-Ni ore (area, perimeter, roughness, elongation for rich cuprous ore). Parameter values and dispersion rise 2–3× in ore zones; crucially, FINE-GRAINED ores are hard to diagnose optically and benefit most from quantitative morphometry, and grain-size/porosity correlate with rock strength for selecting crushing regime and minimising overgrinding.",
+    "relevance": "The single most on-point Norilsk-specific paper: it uses the SAME deposit family as our data and proves that quantitative texture/morphometry from optical images (grain size, spacing, roughness, elongation) is the operative descriptor for selective disintegration. These are exactly the features an image classifier can compute to separate coarse-simple ('рядовая') from fine-grained/complex ('труднообогатимая') ore."
+   },
+   {
+    "title_original": "Development of a geometallurgical framework to quantify mineral textures for process prediction",
+    "title_translation": "Разработка геометаллургической методики количественного описания минеральных текстур для прогноза обогащения",
+    "authors": "C. Lund, P. Lamberg, T. Lindberg",
+    "year": "2015",
+    "venue": "Minerals Engineering, vol. 82, pp. 61–77",
+    "link": "https://www.sciencedirect.com/science/article/abs/pii/S0892687515001417",
+    "language": "English",
+    "scientific_insight": "Introduces particle-based geometallurgy: an ore body is described by modal mineralogy PLUS a set of TEXTURAL ARCHETYPES, and a simple algorithm forecasts the LIBERATION DISTRIBUTION of comminution progeny for each archetype. This makes texture a numerically predictive variable — the liberation spectrum (and hence achievable grade-recovery) is computed as modal composition and texture vary, linking geology to mineral processing without running every flotation test.",
+    "relevance": "Provides the methodological template for what our competition actually is: mapping ore images to a texture archetype and predicting processability. Justifies that a discrete set of texture classes ('archetypes') is a scientifically valid predictor of liberation and recovery."
+   },
+   {
+    "title_original": "A new method to quantify mineral textures for geometallurgy",
+    "title_translation": "Новый метод количественной оценки минеральных текстур для геометаллургии",
+    "authors": "C. Lund, P. Lamberg, T. Lindberg",
+    "year": "2013",
+    "venue": "Process Mineralogy / Luleå University (open-access PDF, DiVA)",
+    "link": "https://www.diva-portal.org/smash/get/diva2:1009172/FULLTEXT01.pdf",
+    "language": "English",
+    "scientific_insight": "Argues that heterogeneity in MINERAL TEXTURE (not just grade) is the key parameter controlling how an ore responds to processing, and sets out a reproducible workflow to quantify texture (modal + association + grain-size) so that liberation can be forecast. Establishes texture quantification as the bridge between the geological block model and the plant.",
+    "relevance": "Foundational open-access statement that texture is THE control on processability — the scientific rationale for classifying ore by texture at all. Freely downloadable full text useful for citing in our PROVENANCE/report."
+   },
+   {
+    "title_original": "Automated mineralogical characterization using optical microscopy: Review and recommendations",
+    "title_translation": "Автоматизированная минералогическая характеризация методом оптической микроскопии: обзор и рекомендации",
+    "authors": "E. Donskoi, A. Poliakov et al.",
+    "year": "2022",
+    "venue": "Minerals Engineering, vol. 189, 107896; DOI 10.1016/j.mineng.2022.107896",
+    "link": "https://www.sciencedirect.com/science/article/abs/pii/S0892687522005064",
+    "language": "English",
+    "scientific_insight": "Comprehensive review establishing Automated Optical Microscopy (AOM) in REFLECTED light as a legitimate, far cheaper alternative to automated SEM (QEMSCAN/MLA) for characterising OPAQUE minerals (sulfides, oxides) and their textures/liberation, without a specialist SEM operator. Reviews reflectance-based identification, image-analysis segmentation and quantification, and states the main limitation (transparent/gangue silicates are hard to distinguish optically) plus recommendations to overcome it.",
+    "relevance": "Directly validates our data modality: quantitative ore analysis FROM reflected-light optical panoramas is an established, peer-reviewed methodology. Frames what optical images can and cannot resolve (great for sulfides; talc/serpentine gangue harder), which is central to detecting the talc-rich ('оталькованная') class."
+   },
+   {
+    "title_original": "Automated mineralogy using optical microscopy in a geometallurgical context: A comparative study on Dumont nickel project ores, Amos, Quebec",
+    "title_translation": "Автоматизированная минералогия методом оптической микроскопии в геометаллургическом контексте: сравнительное исследование руд никелевого проекта Dumont",
+    "authors": "Polytechnique Montréal geometallurgy group",
+    "year": "2023",
+    "venue": "Minerals Engineering (Elsevier)",
+    "link": "https://www.sciencedirect.com/science/article/abs/pii/S0892687523001036",
+    "language": "English",
+    "scientific_insight": "For a low-grade, ultramafic-hosted, DISSEMINATED nickel deposit (Dumont), automated optical microscopy of four geometallurgical-domain samples was benchmarked against QEMSCAN on the same material and gave precise, sufficient mineralogical quantification for geometallurgical purposes. Demonstrates AOM reproduces SEM-grade modal/liberation data for a disseminated Ni-sulfide ore.",
+    "relevance": "Closest published analogue to our pipeline: automated optical-microscopy mineralogy on a DISSEMINATED Ni-sulfide ore, split into geometallurgical domains — exactly our task. Evidence that optical images alone can support processability domaining for nickel ores."
+   },
+   {
+    "title_original": "Automated sulfides quantification by multispectral optical microscopy",
+    "title_translation": "Автоматизированное количественное определение сульфидов методом мультиспектральной оптической микроскопии",
+    "authors": "E. Pirard and co-workers (Univ. Liège)",
+    "year": "2018",
+    "venue": "Minerals Engineering (Elsevier)",
+    "link": "https://www.sciencedirect.com/science/article/abs/pii/S089268751830476X",
+    "language": "English",
+    "scientific_insight": "Six common sulfides (arsenopyrite, chalcopyrite, galena, pyrite, PYRRHOTITE, sphalerite) were automatically identified and quantified on a single polished section using MULTISPECTRAL specular-reflectance imaging (five white-light bands at ~436/480/605/650 nm plus UV 365 nm) and grey-level thresholding — reflectance computed from image grey levels distinguishes species with overlapping single-band brightness. Companion paper (specular-reflectance multispectral ore microscopy, Min. Eng. 2020) compares supervised classifiers on the same principle.",
+    "relevance": "Method for distinguishing pentlandite/pyrrhotite/chalcopyrite (very similar in single-band reflected light) — a core difficulty in our images. Shows that adding spectral bands or learned features markedly improves opaque-sulfide discrimination, informing feature design for our classifier."
+   },
+   {
+    "title_original": "Statistical methods for segmentation and quantification of minerals in ore microscopy",
+    "title_translation": "Статистические методы сегментации и количественной оценки минералов в рудной микроскопии",
+    "authors": "López-Benito, Catalina, Alarcón et al.",
+    "year": "2020",
+    "venue": "Minerals Engineering (Elsevier)",
+    "link": "https://www.sciencedirect.com/science/article/abs/pii/S0892687512000106",
+    "language": "English",
+    "scientific_insight": "Develops statistical (multivariate reflectance/colour-distribution) methods to segment and quantify mineral phases in reflected-light ore-microscopy images, handling overlapping reflectance classes and providing modal abundance from panoramic mosaics.",
+    "relevance": "Concrete image-processing baseline for turning our reflected-light panoramas into per-phase masks (sulfides vs gangue vs replacement phase), the prerequisite for computing liberation/association/talc-fraction features."
+   },
+   {
+    "title_original": "Res-UNet Ensemble Learning for Semantic Segmentation of Mineral Optical Microscopy Images",
+    "title_translation": "Ансамблевое обучение Res-UNet для семантической сегментации изображений оптической микроскопии минералов",
+    "authors": "Res-UNet mineral-segmentation authors",
+    "year": "2024",
+    "venue": "Minerals (MDPI), 14(12), 1281; DOI 10.3390/min14121281",
+    "link": "https://doi.org/10.3390/min14121281",
+    "language": "English",
+    "scientific_insight": "An enhanced U-Net / Res-UNet ensemble performs semantic segmentation of 10 mineral types on polished-section reflected-light images, reaching mean IoU ~0.813 and mean accuracy ~0.892, segmenting/annotating within seconds versus slow, subjective manual point counting. Prior work (Xu & Zhou 2018) already used U-Net to classify pyrite/chalcopyrite/galena/sphalerite. Discusses that minerals with close reflectivity are the hard cases and that extra polarised (PPL/XPL) channels help.",
+    "relevance": "State-of-the-art deep-learning method for exactly our input (opaque minerals in polished sections, reflected light). Provides an architecture and realistic accuracy benchmark for our sulfide/gangue/talc segmentation and downstream texture-feature extraction."
+   },
+   {
+    "title_original": "From visual diagnostics to deep learning: automatic mineral identification in polished section images",
+    "title_translation": "От визуальной диагностики к глубокому обучению: автоматическая идентификация минералов на изображениях аншлифов",
+    "authors": "Korshunov et al.",
+    "year": "2024",
+    "venue": "Mining Science and Technology (Russia) / Горные науки и технологии",
+    "link": "https://mst.misis.ru/jour/article/view/974",
+    "language": "English (Russian journal, bilingual)",
+    "scientific_insight": "Russian-authored study tracing the progression from expert visual reflectance/colour diagnostics to CNN-based automatic mineral identification directly on POLISHED-SECTION (аншлиф) images, addressing the same opaque-mineral discrimination problem and the practical data/annotation issues of ore microscopy in the Russian mineral-processing tradition.",
+    "relevance": "Native-language (Russian) methodological source aligned to our exact data type (аншлифы in reflected light) and terminology; useful precedent and citation for a Russian-context competition report."
+   },
+   {
+    "title_original": "Talc–serpentine interactions and implications for talc depression",
+    "title_translation": "Взаимодействия тальк–серпентин и их значение для депрессии талька",
+    "authors": "B. Feng and co-workers",
+    "year": "2012",
+    "venue": "Minerals Engineering (Elsevier)",
+    "link": "https://www.sciencedirect.com/science/article/abs/pii/S0892687512000787",
+    "language": "English",
+    "scientific_insight": "Talc is naturally hydrophobic and floats readily, contaminating Ni concentrate with MgO and depressing selectivity; serpentine slime coatings adhere to talc and to sulfide surfaces, forming a HYDROPHILIC barrier on pentlandite (lowering Ni recovery) while also hindering CMC/guar depression of talc. Quantifies the mutual talc–serpentine surface interaction that makes talc-bearing ore metallurgically distinct.",
+    "relevance": "Mineralogical-metallurgical basis for our third class 'оталькованная': explains WHY >10 % talc depresses Ni extraction (natural talc floatability + serpentine slime coatings on pentlandite), i.e. why talc content is a genuine processability category rather than just a gangue nuisance."
+   },
+   {
+    "title_original": "Upgrading of talc-bearing copper-nickel sulfide ore by froth flotation using sodium phytate as depressant",
+    "title_translation": "Обогащение талькосодержащей медно-никелевой сульфидной руды флотацией с фитатом натрия в качестве депрессора",
+    "authors": "Talc-bearing Cu-Ni flotation authors",
+    "year": "2024",
+    "venue": "Colloids and Surfaces A: Physicochemical and Engineering Aspects (Elsevier)",
+    "link": "https://www.sciencedirect.com/science/article/abs/pii/S0927775724004229",
+    "language": "English",
+    "scientific_insight": "Demonstrates on a real TALC-BEARING Cu-Ni sulfide ore that talc must be selectively depressed (sodium phytate depresses talc with minor effect on chalcopyrite/pentlandite floatability) to achieve saleable concentrate — direct evidence that talc-rich Cu-Ni ore is a separate metallurgical problem requiring a different reagent regime.",
+    "relevance": "Confirms talc-rich Cu-Ni ore ('оталькованная') as a recognised processing category in current literature and shows the reagent strategy tied to it, reinforcing why identifying talc from images matters for our classes."
+   },
+   {
+    "title_original": "Maximizing the recovery and throughput of a rougher flotation bank by improving the recovery of composite particles",
+    "title_translation": "Максимизация извлечения и производительности межцикловой флотации за счёт улучшения извлечения сросшихся (композитных) частиц",
+    "authors": "Rougher-bank composite-particle study",
+    "year": "2023",
+    "venue": "Minerals Engineering (Elsevier)",
+    "link": "https://www.sciencedirect.com/science/article/abs/pii/S0892687523005599",
+    "language": "English",
+    "scientific_insight": "Quantifies the liberation threshold behind 'hard-to-treat' ore: floatability of a composite particle is set by the SIZE, degree of sulfide liberation and spatial texture of exposed sulfide; once exposed sulfide surface falls below ~50 %, and especially below ~25 %, recovery in a conventional circuit drops sharply. Insufficient grinding leaves minerals locked in composites and hydrophobicity too low for bubble attachment.",
+    "relevance": "Gives a concrete, numeric liberation criterion (<25–50 % exposed sulfide surface → recovery collapse) that mechanistically defines our 'труднообогатимая' class: fine intergrowth/replacement means sulfides stay in low-exposure composites and are lost to tailings even after grinding."
+   },
+   {
+    "title_original": "Floatability prediction of copper ore using particle complexity and textural features",
+    "title_translation": "Прогноз флотируемости медной руды по сложности частиц и текстурным признакам",
+    "authors": "Texture-based floatability-prediction authors",
+    "year": "2025",
+    "venue": "Minerals Engineering (Elsevier)",
+    "link": "https://www.sciencedirect.com/science/article/abs/pii/S0892687525002341",
+    "language": "English",
+    "scientific_insight": "Builds a predictive model of flotation recovery from PARTICLE COMPLEXITY and TEXTURAL FEATURES (association, intergrowth geometry, exposure), showing that image-derived texture descriptors — not just modal grade — predict floatability class. Confirms recovery is governed by how sulfide is spatially arranged (locking/association) as measured from images.",
+    "relevance": "Modern proof-of-concept for exactly our approach: predicting processability/recovery from texture features extracted from ore images. Supports feature engineering (intergrowth complexity, sulfide-gangue association) to separate 'рядовая' from 'труднообогатимая' classes."
+   }
+  ],
+  "key_insights": [
+   "Recovery is a function of TEXTURE, not just grade: multiple peer-reviewed studies on the exact Pn-Po-Cp system (Mishra/Viljoen/Mouri 2013; Nkomati blending 2022) show Ni grade-recovery is a complex function of ore mineralogy AND texture. This is the scientific backbone of separating 'рядовая' (coarse, simple intergrowths, high liberation) from 'труднообогатимая'.",
+   "Mechanism of 'труднообогатимая': pentlandite finely exsolved/emulsion-intergrown in pyrrhotite and sulfides replaced by a dark phase stay LOCKED in low-exposure composite particles. A quantitative threshold exists — once exposed sulfide surface drops below ~25–50 %, conventional flotation recovery collapses (composite-particle study 2023) — so fine intergrowth = poor liberation = lost Ni even after fine grinding, and over-grinding to chase liberation itself destroys recovery of already-liberated pentlandite (Nkomati 2022).",
+   "Pyrrhotite is an active depressant, not passive gangue: at high pyrrhotite:pentlandite ratios, pyrrhotite floats early and galvanically/surface-depresses pentlandite (Mishra 2013), so a texture with abundant Po intergrown with Pn is a direct visual predictor of lower Ni recovery.",
+   "'Оталькованная' has a distinct physicochemical basis: talc is naturally hydrophobic and self-floats (contaminating concentrate with MgO), while serpentine slime coatings both armor pentlandite with a hydrophilic barrier and frustrate talc depressants (Feng 2012); >10 % talc therefore genuinely depresses Ni extraction and needs a dedicated depressant regime (sodium phytate/CMC/guar) — a real processing class, not a nuisance.",
+   "Genetic texture classes (disseminated / net-textured / massive / blebby; Barnes 2017) are the upstream cause of liberation differences: sulfide grain size, inter-grain spacing and gangue association set by ore genesis are what later govern grindability and recovery — so classifying these textures from panoramas is mineralogically principled.",
+   "Texture can be made a NUMERICAL predictor: particle-based geometallurgy (Lund & Lamberg 2013/2015) forecasts the liberation distribution from texture archetypes, and 2025 work predicts floatability directly from image texture/particle-complexity features — validating our task of predicting a processability class from ore images.",
+   "Our data modality is scientifically established: automated optical microscopy in reflected light is a peer-reviewed, low-cost alternative to QEMSCAN/MLA for opaque minerals (Donskoi 2022), proven on a disseminated Ni-sulfide ore (Dumont 2023). Key limitation to design around: pentlandite/pyrrhotite/chalcopyrite have close single-band reflectance — multispectral imaging (Pirard 2018) and deep-learning segmentation (Res-UNet, IoU~0.81 / Korshunov) are the demonstrated ways to separate them and to detect low-reflectance talc/serpentine gangue.",
+   "A Norilsk-specific, native-context anchor exists: Duryagina, Talovina, Lieberwirth & Ilalova (2022, Journal of Mining Institute) measured morphometric grain parameters (area, perimeter, edge roughness, shape factor/sphericity, elongation, inter-grain spacing) by optical microscopy + X-ray micro-CT on Oktyabrsky (Norilsk) disseminated and cuprous ores, explicitly noting fine-grained ores are hard to diagnose optically — these are exactly the quantitative texture features our classifier should compute to distinguish coarse-simple from fine-complex ore."
+  ]
+ },
+ {
+  "angle": "НАУКА о ТАЛЬКЕ и СЕРПЕНТИНЕ в Ni-сульфидных рудах и их влиянии на обогащение: почему тальк (>10%) выделяется в отдельный техкласс «оталькованная руда», физика природной флотируемости и оптической «невидимости» талька в отражённом свете, механизм serpentine slime-coating и депрессии Ni, разделение поведения талька (→ в концентрат) и серпентина (→ в хвосты/на поверхность сульфидов), а также методы количественного измерения талька/серпентина. Поиск вёлся на английском, русском (Норильск/Печенга) и китайском (Цзиньчуань/Jinchuan) языках; включены только реально найденные peer-reviewed статьи, обзоры и труды. Отдельно закрыты подвопросы: MgO-штраф плавки, «naturally floatable gangue», текстуры замещения/эксолюции (труднообогатимая руда) и ограничения отражённой оптики при детекции прозрачной пустой породы.",
+  "papers": [
+   {
+    "title_original": "Влияние морфологии частиц талька и серпентина на их распределение в продуктах флотации (на примере медно-никелевых руд Печенги)",
+    "title_translation": "Influence of talc and serpentine particle morphology on their distribution in flotation products (Pechenga Cu-Ni ores)",
+    "authors": "Лихачева С.В., Нерадовский Ю.Н. (Likhacheva S.V., Neradovskiy Yu.N.)",
+    "year": "2017",
+    "venue": "Обогащение руд (Obogashchenie Rud / Ore Dressing), №1",
+    "language": "Russian",
+    "link": "https://doi.org/10.17580/or.2017.01.07",
+    "scientific_insight": "Электронной микроскопией показано, что тальк и серпентин ведут себя ПО-РАЗНОМУ и разделяются по продуктам флотации именно из-за морфологии зёрен. Тальк имеет тонкочешуйчатую (flaky) форму + низкую твёрдость → переизмельчается, образует шламы и за счёт пластинчатой формы быстро транспортируется потоками пульпы и обогащает пенный продукт → преимущественно уходит В КОНЦЕНТРАТ. Серпентин имеет изометрично-таблитчатые зёрна → преимущественно уходит В ХВОСТЫ. Рекомендация: контроль состава питания, времени измельчения и удаление шламов для снижения талька в концентрате.",
+    "relevance": "Прямое научное обоснование класса «оталькованная руда»: объясняет, ПОЧЕМУ именно тальк (а не серпентин) загрязняет концентрат и снижает извлечение/качество, на реальных норильско-печенгских рудах. Ключ для интерпретации текстурных признаков (чешуйки талька vs изометрия серпентина) и для того, что переизмельчение талька усиливает проблему."
+   },
+   {
+    "title_original": "Выбор и обоснование технологии обогащения вкрапленных руд месторождения Норильск-1",
+    "title_translation": "Selection and justification of the beneficiation technology for disseminated ores of the Norilsk-1 deposit",
+    "authors": "Акулова Т.А., Ананко И.А., Любезных В.А., Ковтунов А.В. (Akulova T.A. et al., Gipronickel)",
+    "year": "2022",
+    "venue": "Цветные металлы (Tsvetnye Metally / Non-ferrous Metals), №2",
+    "language": "Russian",
+    "link": "https://doi.org/10.17580/tsm.2022.02.03",
+    "scientific_insight": "Для вкрапленных Cu-Ni руд Норильск-1 обоснована «универсальная» гибкая схема с тремя вариантами (селективные Cu- и Ni-концентраты либо коллективный концентрат), рассчитанная на ИЗМЕНЧИВОСТЬ состава руды. Пилотирование в Гипроникеле на композитных пробах Полярного рудника (проектно ~9 млн т/год к 2027). Отражает принцип геометаллургии: разные технологические типы руды требуют разных режимов раскрытия/депрессии.",
+    "relevance": "Подтверждает саму логику деления руды на технологические классы обогатимости для норильской группы и необходимость подстраивать схему под минералогическую вариативность (в т.ч. содержание талька/серпентина и характер вкрапленности)."
+   },
+   {
+    "title_original": "Talc Flotation—An Overview",
+    "title_translation": "Обзор флотации талька",
+    "authors": "Chelgani, S. Chehreh",
+    "year": "2021",
+    "venue": "Minerals (MDPI), 11(7):662",
+    "language": "English",
+    "link": "https://doi.org/10.3390/min11070662",
+    "scientific_insight": "Тальк — природно гидрофобный слоистый силикат Mg3[Si4O10](OH)2 со структурой T–O–T (2:1): нейтральные силоксановые базальные плоскости (–Si–O–Si–) занимают ~90% поверхности и неполярны/гидрофобны, а рёбра (SiOH/MgOH) гидрофильны и pH-зависимы. Поэтому тальк флотируется БЕЗ КОЛЛЕКТОРА (извлечение часто >80%). Полисахаридные депрессоры (крахмал, декстрин, КМЦ, гуар) эффективны, но дороги и малоселективны, из-за чего депрессия талька почти всегда идёт с потерями сульфидов.",
+    "relevance": "Фундамент «почему >10% талька = отдельный класс»: природная флотируемость означает, что тальк неизбежно идёт в пенный концентрат, разубоживает его и требует специальных депрессоров ценой извлечения Ni. Даёт кристаллохимическое объяснение (базальные силоксановые грани)."
+   },
+   {
+    "title_original": "The effect of slime coatings of the serpentine minerals, chrysotile and lizardite, on pentlandite flotation",
+    "title_translation": "Влияние шламовых покрытий серпентиновых минералов (хризотил, лизардит) на флотацию пентландита",
+    "authors": "Edwards, C.R.; Kipkie, W.B.; Agar, G.E.",
+    "year": "1980",
+    "venue": "International Journal of Mineral Processing, 7(1):33–42",
+    "language": "English",
+    "link": "https://www.sciencedirect.com/science/article/abs/pii/0301751680900356",
+    "scientific_insight": "Классическая работа: серпентин легко ошламовывается, и его тонкие частицы образуют ШЛАМОВОЕ ПОКРЫТИЕ (slime coating) на поверхности пентландита. Механизм — электростатическая гетероагрегация: положительно заряженный серпентин осаждается на отрицательно заряженной поверхности сульфида (в рамках теории ДЛФО/расширенной ДЛФО), экранирует адсорбцию ксантогената и ДЕПРЕССИРУЕТ флотацию пентландита, снижая извлечение Ni.",
+    "relevance": "Объясняет физику вреда серпентина, отличную от талька: серпентин портит извлечение не тем, что сам всплывает, а тем, что «одевает» сульфид плёнкой. Важно для признака «тонкие срастания/шламовое загрязнение» и для отличения оталькованной руды от серпентинизированной."
+   },
+   {
+    "title_original": "Mineralogical characterisation of naturally floatable gangue in Merensky Reef ore flotation",
+    "title_translation": "Минералогическая характеристика природно-флотируемой пустой породы во флотации руды рифа Меренского",
+    "authors": "Becker, M.; Harris, P.J.; Wiese, J.G.; Bradshaw, D.J.",
+    "year": "2009",
+    "venue": "International Journal of Mineral Processing, 93(3–4):246–255",
+    "language": "English",
+    "link": "https://ui.adsabs.harvard.edu/abs/2009IJMP...93..246B/abstract",
+    "scientific_insight": "Количественно (QEMSCAN) измерена природно-флотируемая пустая порода (NFG). Ключевой вывод: тальк — единственный силикат с выраженной природной флотируемостью, НО масса всплывшей NFG больше массы чистого талька в питании — значит вклад дают также ортопироксен, клинопироксен, плагиоклаз (частично за счёт увлечения/entrainment и срастаний с тальком). Ранжирование разубоживателей концентрата по убыванию: ортопироксен > тальк > клинопироксен > плагиоклаз.",
+    "relevance": "Показывает, как тальк КОЛИЧЕСТВЕННО меряют в руде (автоматическая минералогия) и что «оталькованность» проявляется не только чистым тальком, но и его сростками/увлечением. Методическая опора для порога >10% и для разделения механизмов «истинная флотация талька» vs «механическое увлечение»."
+   },
+   {
+    "title_original": "Exsolution in the mss-pentlandite system: Textural and genetic implications for Ni-sulfide ores",
+    "title_translation": "Распад твёрдого раствора в системе mss–пентландит: текстурные и генетические следствия для Ni-сульфидных руд",
+    "authors": "Durazzo, A.; Taylor, L.A.",
+    "year": "1982",
+    "venue": "Mineralium Deposita, 17(2):313–332",
+    "language": "English",
+    "link": "https://doi.org/10.1007/BF00204463",
+    "scientific_insight": "Экспериментально (синтетическая система Fe–Ni–S) показано, что пентландит выделяется из моносульфидного твёрдого раствора (mss) при охлаждении между ~610° и ~250°C, образуя ПЛАМЕВИДНЫЕ ламели/эксолюционные вростки внутри пирротина, а также массивный пентландит по границам зёрен. Тонкие эксолюционные текстуры определяются степенью пересыщения и диффузией.",
+    "relevance": "Минералогическая первопричина класса «труднообогатимая»: пламевидная эксолюция пентландита в пирротине + эмульсионная вкрапленность халькопирита = тонкие срастания на микронном уровне, которые НЕ раскрываются при экономически приемлемом измельчении → плохой liberation → низкое извлечение. Прямо обосновывает текстурный признак тонких срастаний."
+   },
+   {
+    "title_original": "硫化矿浮选中滑石抑制剂的研究进展",
+    "title_translation": "Research progress of talc depressants in sulfide ore flotation",
+    "authors": "(коллектив, журнал «Kuangchan Baohu yu Liyong»)",
+    "year": "2020",
+    "venue": "矿产保护与利用 (Conservation and Utilization of Mineral Resources)",
+    "language": "Chinese",
+    "link": "http://www.xml-data.cn/KCBHYLY/html/7a0230bb-aba2-4951-a7e3-6c78703e6886.htm",
+    "scientific_insight": "Китайский обзор систематизирует депрессоры талька: неорганические (жидкое стекло Na2SiO3, гексаметафосфат натрия) и высокомолекулярные органические (КМЦ, гуаровая камедь) — последние обладают более сильной и селективной депрессией. Механизм — адсорбция гидрофильных полимеров на базальных гранях талька, изменение заряда поверхности и предотвращение прилипания к пузырьку. Подчёркивается компромисс селективность/потери сульфидов.",
+    "relevance": "Native-язычный (китайский) научный источник по управлению тальком в сульфидной флотации; релевантен тому, как на практике борются с оталькованными рудами (Цзиньчуань) и почему полное удаление талька без потерь Ni затруднено."
+   },
+   {
+    "title_original": "镍黄铁矿与蛇纹石浮选分离中有机抑制剂的机理研究进展",
+    "title_translation": "Research progress on the mechanism of organic depressants in the flotation separation of pentlandite and serpentine",
+    "authors": "(коллектив, журнал «Kuangchan Baohu yu Liyong»)",
+    "year": "2021",
+    "venue": "矿产保护与利用 (Conservation and Utilization of Mineral Resources)",
+    "language": "Chinese",
+    "link": "https://html.rhhz.net/KCBHYLY/html/eaf999be-a4a8-4b86-868e-698f91550c76.htm",
+    "scientific_insight": "Обзор механизма разделения пентландит/серпентин (руды Цзиньчуань). Серпентин хрупок, легко даёт шламы; положительно заряженные шламы серпентина гетероагрегируют на отрицательном пентландите (slime coating) + идут в пену увлечением. Органические депрессоры/диспергаторы (КМЦ, полиакрилаты, полиэпоксиянтарная кислота, альгинат) перезаряжают/диспергируют серпентин, разрушая покрытие и снижая MgO в концентрате при сохранении извлечения Ni.",
+    "relevance": "Native-язычный обзор именно по Cu-Ni сульфидам с серпентином; количественно и механистически описывает, почему серпентин ухудшает раскрытие/флотацию сульфидов и как это отличается от талька — важно для разметки признаков серпентинизации vs оталькования."
+   },
+   {
+    "title_original": "Upgrading of talc-bearing copper-nickel sulfide ore by froth flotation using sodium phytate as depressant",
+    "title_translation": "Обогащение талькосодержащей Cu-Ni сульфидной руды флотацией с фитатом натрия как депрессором",
+    "authors": "(Colloids and Surfaces A authors)",
+    "year": "2024",
+    "venue": "Colloids and Surfaces A: Physicochemical and Engineering Aspects",
+    "language": "English",
+    "link": "https://www.sciencedirect.com/science/article/abs/pii/S0927775724004229",
+    "scientific_insight": "Фитат натрия (sodium phytate) селективно и эффективно депрессирует тальк, слабо влияя на флотируемость пентландита и халькопирита. Реальная талькосодержащая Cu-Ni руда: депрессор снижает содержание талька/MgO в концентрате при сохранении извлечения сульфидов — демонстрирует, что оталькованные руды технологически отделяемы, но требуют специфической реагентики.",
+    "relevance": "Конкретный кейс переработки именно «оталькованной» Cu-Ni сульфидной руды: подтверждает, что тальк — целевой вредный компонент, требующий отдельного техрешения, что и оправдывает выделение класса."
+   },
+   {
+    "title_original": "The effect of a new polysaccharide on the depression of talc and the flotation of a nickel–copper sulfide ore",
+    "title_translation": "Влияние нового полисахарида на депрессию талька и флотацию Ni–Cu сульфидной руды",
+    "authors": "(Minerals Engineering authors)",
+    "year": "2015",
+    "venue": "Minerals Engineering",
+    "language": "English",
+    "link": "https://www.sciencedirect.com/science/article/abs/pii/S0892687515000783",
+    "scientific_insight": "Показано, что полисахаридный депрессор избирательно подавляет природную флотируемость талька в реальной Ni–Cu сульфидной руде, повышая качество концентрата (снижая MgO) без чрезмерной потери сульфидов; адсорбция полимера идёт водородными связями/гидрофобным взаимодействием на базальных гранях талька.",
+    "relevance": "Ещё один прямой источник по тальку в Ni–Cu сульфидной руде; количественно связывает содержание талька с качеством концентрата и MgO-штрафом."
+   },
+   {
+    "title_original": "A Study on the Differential Effects of Serpentine from Different Origins on Chalcopyrite Flotation Behavior",
+    "title_translation": "Различия во влиянии серпентина разного генезиса на флотацию халькопирита",
+    "authors": "(Minerals / MDPI authors)",
+    "year": "2026",
+    "venue": "Minerals (MDPI), 16(1):22",
+    "language": "English",
+    "link": "https://doi.org/10.3390/min16010022",
+    "scientific_insight": "Серпентин разного происхождения/полиморфа (лизардит, хризотил, антигорит) по-разному вредит флотации: различаются склонность к ошламованию, интенсивность шламового покрытия сульфида и вынос MgO в концентрат. То есть «серпентинизированность» руды не однородна — важен тип серпентина.",
+    "relevance": "Уточняет, что признак «серпентин» неоднороден: разные полиморфы дают разную обогатимость. Полезно при классификации руд, где серпентин сопутствует тальку и сульфидам."
+   },
+   {
+    "title_original": "Reduction of magnesia in nickel concentrates by modification of the froth zone in column flotation",
+    "title_translation": "Снижение содержания магнезии (MgO) в никелевых концентратах модификацией пенной зоны колонной флотации",
+    "authors": "(Minerals Engineering authors)",
+    "year": "1996",
+    "venue": "Minerals Engineering, 9(x)",
+    "language": "English",
+    "link": "https://www.sciencedirect.com/science/article/abs/pii/S0892687596001410",
+    "scientific_insight": "Значительная доля MgO-силикатов (тальк/серпентин) попадает в никелевый концентрат за счёт МЕХАНИЧЕСКОГО УВЛЕЧЕНИЯ (entrainment), а не истинной флотации; управление пенной зоной (промывка, колонная флотация) снижает вынос MgO. Разделяет два механизма загрязнения: истинная флотация талька vs гидравлическое увлечение мелких силикатов.",
+    "relevance": "Объясняет инженерную суть MgO-штрафа и то, что часть талька/серпентина в концентрате — увлечение шламов; важно для интерпретации, почему тонкая (переизмельчённая) оталькованная руда особенно проблемна."
+   },
+   {
+    "title_original": "Automated mineralogical characterization using optical microscopy: Review and recommendations",
+    "title_translation": "Автоматизированная минералогическая характеризация методом оптической микроскопии: обзор и рекомендации",
+    "authors": "(Minerals Engineering review authors)",
+    "year": "2022",
+    "venue": "Minerals Engineering (Review)",
+    "language": "English",
+    "link": "https://www.sciencedirect.com/science/article/abs/pii/S0892687522005064",
+    "scientific_insight": "Обзор автоматического КОЛИЧЕСТВЕННОГО анализа руд по ОТРАЖЁННОЙ оптической микроскопии (дешевле SEM-based QEMSCAN/MLA). Прямо констатирует главное ограничение метода: ПРОЗРАЧНЫЕ минералы пустой породы (тальк, серпентин, силикаты) плохо детектируются/квантифицируются в отражённом свете, поскольку не дают яркого отклика, как непрозрачные сульфиды. Рекомендации по калибровке и сегментации по отражательной способности и цвету.",
+    "relevance": "Методическое ядро: объясняет, ПОЧЕМУ тальк пиксельно почти не виден в отражённом свете (прозрачен → низкая яркость, сливается с фоном/смолой), и что автоматический оптический анализ руд по яркости надёжно берёт сульфиды, но не силикатную породу — ключевое ограничение для оптической классификации оталькованных руд."
+   },
+   {
+    "title_original": "A Novel Method for Evaluation of Ore Minerals Based on Optical Microscopy and Image Analysis: Preliminary Results",
+    "title_translation": "Новый метод оценки рудных минералов на основе оптической микроскопии и анализа изображений",
+    "authors": "(Minerals / MDPI authors)",
+    "year": "2022",
+    "venue": "Minerals (MDPI), 12(11):1348",
+    "language": "English",
+    "link": "https://www.mdpi.com/2075-163X/12/11/1348",
+    "scientific_insight": "Демонстрирует конвейер количественного анализа руд по оптическим изображениям (отражённый свет + image analysis): сегментация фаз по отражательной способности/цвету, оценка модального состава и текстур (срастания, раскрытие). Подтверждает применимость оптики для непрозрачных рудных минералов и трудности с прозрачной породой.",
+    "relevance": "Прямой методологический прецедент нашей задачи — автоматическая классификация/оценка руд по панорамной оптике отражённого света; показывает, какие признаки (яркость, цвет, текстура срастаний) реально извлекаемы."
+   },
+   {
+    "title_original": "MSA at 100 and why optical mineralogy still matters: The optical properties of talc",
+    "title_translation": "MSA в 100 лет и почему оптическая минералогия всё ещё важна: оптические свойства талька",
+    "authors": "(American Mineralogist)",
+    "year": "2022",
+    "venue": "American Mineralogist, 107(1):1",
+    "language": "English",
+    "link": "https://pubs.geoscienceworld.org/msa/ammin/article/107/1/1/610334/",
+    "scientific_insight": "Тальк оптически прозрачен и бесцветен, с показателями преломления ~1.54–1.59 (низкий рельеф) — то есть в ПРОХОДЯЩЕМ свете он светлый силикат, а в ОТРАЖЁННОМ свете имеет очень низкую отражательную способность (~5%) в отличие от непрозрачных сульфидов (пирротин ~35–40%, халькопирит ~45%, пентландит ~50%). Из-за этого в аншлифе тальк выглядит тёмно-серым/почти чёрным, близким к монтировочной смоле.",
+    "relevance": "Физическое объяснение «прозрачности талька в отражённом свете»: пиксельно тальк почти не отличим от фона по яркости, поэтому оптическая классификация оталькованных руд не может опираться на прямую детекцию талька — только на косвенные текстурные признаки и распределение сульфидов."
+   }
+  ],
+  "key_insights": [
+   "ПОЧЕМУ >10% талька = отдельный техкласс: тальк природно гидрофобен (структура T–O–T, ~90% поверхности — нейтральные силоксановые базальные грани), флотируется БЕЗ КОЛЛЕКТОРА (извлечение >80%), поэтому неизбежно всплывает в концентрат, разубоживает его и вносит MgO. Депрессировать тальк можно только полисахаридами (КМЦ, гуар, фитат/полиакрилаты), но малоселективно и с потерями Ni — при высоком тальке экономика раскрытия рушится, что и делает такую руду качественно иным технологическим типом (Chelgani 2021; Talc-depressant кейсы 2015/2024).",
+   "MgO-ШТРАФ ПЛАВКИ: тальк/серпентин = Mg-силикаты; высокий MgO в концентрате повышает температуру плавления и вязкость шлака (энерго- и огнеупорные издержки, вплоть до отказа плавильни принимать концентрат). Инженерные ориентиры из практики: MgO в концентрате целевое <5% (Fe:MgO ~5.5), MgO в шлаке <~11%. Тальк природной флотацией + серпентин механическим увлечением вместе гонят MgO вверх (Minerals Eng. 1996).",
+   "ТАЛЬК vs СЕРПЕНТИН — РАЗНЫЕ МЕХАНИЗМЫ ВРЕДА: тальк (тонкочешуйчатый, низкая твёрдость → переизмельчается, гидрофобен) идёт В КОНЦЕНТРАТ истинной флотацией; серпентин (изометричный, хрупкий, легко ошламовывается) идёт В ХВОСТЫ, НО его положительно заряженные шламы гетероагрегируют на отрицательном пентландите (slime coating по ДЛФО), экранируют ксантогенат и ДЕПРЕССИРУЮТ извлечение Ni. То есть тальк портит КАЧЕСТВО концентрата, серпентин — ИЗВЛЕЧЕНИЕ. Разметка признаков должна их различать (Likhacheva & Neradovskiy 2017; Edwards, Kipkie & Agar 1980; кит. обзоры).",
+   "ПОЧЕМУ ТАЛЬК ПИКСЕЛЬНО НЕ ВИДЕН В ОТРАЖЁННОМ СВЕТЕ: тальк оптически прозрачен и бесцветен (n≈1.54–1.59), в отражённом свете его отражательная способность крайне низка (~5%) против непрозрачных сульфидов (пирротин ~35–40%, халькопирит ~45%, пентландит ~50%). В аншлифе он выглядит тёмно-серым/почти чёрным, сливаясь с монтировочной смолой/фоном → по яркости не отделим. Прозрачная пустая порода — признанное ГЛАВНОЕ ограничение автоматической рефлективной оптической минералогии (Am. Mineral. 107:1, 2022; Minerals Eng. review 2022).",
+   "СЛЕДСТВИЕ ДЛЯ НАШЕЙ МОДЕЛИ: класс «оталькованная» по оптике нельзя ловить прямой детекцией талька (он невидим по яркости) — только косвенно: по разреженной/раздробленной вкрапленности сульфидов, тёмному силикатному фону между зёрнами, обилию мелких тёмных промежутков и текстуре сростков. Прямое количественное измерение талька требует SEM-based автоматической минералогии (QEMSCAN/MLA), XRD или SWIR/VNIR-гиперспектра (у талька диагностические Mg-OH полосы ~2.31 мкм), а не RGB отражённого света (Becker 2009; гиперспектр geometallurgy).",
+   "ТРУДНООБОГАТИМАЯ РУДА = ТЕКСТУРЫ ЗАМЕЩЕНИЯ/ЭКСОЛЮЦИИ: пентландит выделяется из mss в виде пламевидных ламелей внутри пирротина (эксолюция 610–250°C), халькопирит — эмульсионная вкрапленность; такие срастания на микронах НЕ раскрываются при экономичном измельчении (рекомендуют грубее ~48% −75 мкм, т.к. тонкий помол = переизмельчение талька + шламы серпентина). Замещение сульфидов вторичной серой/тёмной фазой + тонкие срастания = плохой liberation → низкое извлечение (Durazzo & Taylor 1982).",
+   "NATURALLY FLOATABLE GANGUE (NFG) — КОЛИЧЕСТВЕННО: масса всплывшей пустой породы превышает массу чистого талька в питании — вклад дают также сростки талька с пироксенами/плагиоклазом и механическое увлечение шламов. Значит «оталькованность» проявляется системно (тальк + его ассоциации + entrainment), а измерять её корректнее автоматической минералогией с разделением истинной флотации и увлечения (Becker et al. 2009).",
+   "ЯЗЫКОВОЕ ПОКРЫТИЕ ИСТОЧНИКОВ: подтверждено на русском (Печенга/Норильск: морфология талька/серпентина, гибкие техсхемы), английском (surface chemistry талька, serpentine slime-coating, NFG, эксолюция, оптическая автоматизация) и китайском (Цзиньчуань: обзоры депрессоров талька и механизма разделения пентландит/серпентин). Все ссылки — реально найденные, с DOI/URL."
+  ]
+ },
+ {
+  "angle": "Научные работы по КОМПЬЮТЕРНОМУ/АВТОМАТИЧЕСКОМУ анализу руд в ОТРАЖЁННОМ свете (digital / automated reflected-light ore microscopy): идентификация и сегментация рудных минералов по отражательной способности и цвету, мультиспектральная рефлектометрия, глубокое обучение по фотографиям аншлифов, сопоставление оптики с SEM-автоматической минералогией (QEMSCAN/MLA), и установленные ПРЕДЕЛЫ цвето-/рефлектанс-идентификации. Особый акцент на работах прямо по нашему объекту — медно-никелевым сульфидным рудам (пирротин/пентландит/халькопирит) и никелевой геометаллургии — и на решении проблемы «прозрачных» (жильных/силикатных, включая тальк) фаз, которые в отражённом свете почти неотличимы от смолы.",
+  "papers": [
+   {
+    "title_original": "От визуальной диагностики к глубокому обучению: автоматическое определение минералов на фотографиях аншлифов",
+    "title_translation": "From visual diagnostics to deep learning: automatic mineral identification in polished section images",
+    "authors": "Д. М. Коршунов (D.M. Korshunov), A.V. Khvostikov, G.V. Nikolaev, D.V. Sorokin, O.I. Indychko, M.A. Boguslavskii, A.S. Krylov (МГУ им. Ломоносова / ИГЕМ РАН)",
+    "year": "2025",
+    "venue": "Mining Science and Technology (Russia) / Горные науки и технологии, т. 10, № 3",
+    "language": "Русский (Russian)",
+    "link": "https://mst.misis.ru/jour/article/view/974 (DOI 10.17073/2500-0632-2025-05-416); RU-версия: https://journals.rcsi.science/2500-0632/article/view/350750",
+    "scientific_insight": "Пиксельная семантическая сегментация аншлифов CNN (PSPNet + ResNet18, dilated conv) по датасету LumenStone: средний IoU 0.88, pixel accuracy 0.96 по 9 рудным минералам + обобщённая нерудная фаза. Отдельно решают проблему АНИЗОТРОПИИ — минералы «гаснут» в скрещенных николях (XPL), что нужно для различения пирит/марказит/арсенопирит, недостижимого по одному цвету. Явно формулируют ПРЕДЕЛ классики: цвет + отражательная способность 'не позволяют различать минералы с близкими оптическими свойствами'; худший минерал — магнетит (IoU 0.650), лучший — пирит (0.964).",
+    "relevance": "КЛЮЧЕВАЯ для нас: подмножество LumenStone S2 — именно медно-никелевые СУЛЬФИДНЫЕ руды (пирротин, пентландит, халькопирит, как в Норильске). Получены поминеральные IoU прямо для наших фаз: пирротин 0.928, халькопирит 0.899, пентландит 0.790. Русскоязычная, метод один-в-один под нашу задачу сегментации аншлифов; авторы ставят целью распознавание срастаний/текстур."
+   },
+   {
+    "title_original": "Automatic Identification of Minerals in Images of Polished Sections",
+    "title_translation": "Автоматическая идентификация минералов на изображениях аншлифов",
+    "authors": "A.V. Khvostikov, D.M. Korshunov, A.S. Krylov, M.A. Boguslavskiy (Lomonosov MSU)",
+    "year": "2021",
+    "venue": "International Archives of the Photogrammetry, Remote Sensing and Spatial Information Sciences, vol. XLIV-2/W1-2021, pp. 113-118 (открытый доступ)",
+    "language": "English (российская группа)",
+    "link": "https://doi.org/10.5194/isprs-archives-XLIV-2-W1-2021-113-2021 ; https://isprs-archives.copernicus.org/articles/XLIV-2-W1-2021/113/2021/",
+    "scientific_insight": "Первичная статья, вводящая ОТКРЫТЫЙ датасет LumenStone (пиксельные маски минеральных ассоциаций в аншлифах) + CNN-сеть + GUI-инструмент для геологов. Показано, что автоматический анализ аншлифов даёт значимое сокращение времени изучения руд и устраняет фактор субъективной ошибки диагностики; создаёт универсальный инструмент сравнения руд разных месторождений.",
+    "relevance": "Даёт ГОТОВЫЙ размеченный ресурс (LumenStone) и baseline-архитектуру, напрямую переиспользуемые для нашего пайплайна панорамной сегментации аншлифов; открытый доступ = можно скачать данные и веса для предобучения/трансфера на наши классы."
+   },
+   {
+    "title_original": "Automated mineralogical characterization using optical microscopy: Review and recommendations",
+    "title_translation": "Автоматизированная минералогическая характеризация методом оптической микроскопии: обзор и рекомендации",
+    "authors": "B. De Castro, M. Benzaazoua, A. Chopard, B. Plante",
+    "year": "2022",
+    "venue": "Minerals Engineering, vol. 189, art. 107896",
+    "language": "English",
+    "link": "https://www.sciencedirect.com/science/article/abs/pii/S0892687522005064 (ADS: 2022MiEng.18907896D)",
+    "scientific_insight": "Систематический обзор автоматической оптической минералогии (AOM) как дешёвой альтернативы SEM-EDS (QEMSCAN/MLA) для геометаллургии. Чётко фиксирует ГЛАВНЫЙ ПРЕДЕЛ отражённого света: непрозрачные (рудные) минералы распознаются по цвету/отражению хорошо, но ПРОЗРАЧНЫЕ (жильные/силикатные) фазы почти не детектируются, т.к. их отражательная способность близка к отражательной способности эпоксидной/акриловой смолы. Рекомендации по улучшению.",
+    "relevance": "Прямо очерчивает, что оптика надёжно 'видит' сульфиды (наши пирротин/пентландит/халькопирит), но плохо — тальк/серпентин (прозрачные), критично для нашего 'оталькованного' класса (>10% талька). Даёт научное обоснование, почему для талька нужны спец-приёмы (сегментация по текстуре/фону, а не по отражению)."
+   },
+   {
+    "title_original": "Novel technique for the preparation and analysis of powder-based polished sections by automated optical mineralogy: Part 2 – Use of deep learning approach for transparent mineral detection",
+    "title_translation": "Новая методика подготовки и анализа порошковых аншлифов автоматической оптической минералогией. Часть 2 — глубокое обучение для детекции прозрачных минералов",
+    "authors": "B. De Castro et al.",
+    "year": "2023",
+    "venue": "Minerals Engineering",
+    "language": "English",
+    "link": "https://www.sciencedirect.com/science/article/abs/pii/S0892687523005228",
+    "scientific_insight": "Решает именно 'проблему прозрачных фаз': порошки руд заливают в АКРИЛОВУЮ смолу (а не эпоксид/эпоксид+сажу) и обучают DL-алгоритм на изображениях в отражённом свете детектировать ВСЕ частицы, включая прозрачные (жильные) минералы, которые классической пороговой сегментацией не отделяются от смолы. Показана оптимальная детекция прозрачных минералов при размерах < 1 мм и P80 ~75 мкм.",
+    "relevance": "Прямой рецепт для нашего 'оталькованного' класса: как оптикой + deep learning выделять тальк/силикаты (прозрачные) для количественной оценки их доли (>10%). Подтверждает, что подбор смолы и нейросеть — рабочий путь обойти рефлектанс-предел оптики для жильных фаз."
+   },
+   {
+    "title_original": "Automated mineralogy using optical microscopy in a geometallurgical context: A comparative study on Dumont nickel project ores, Amos, Quebec",
+    "title_translation": "Автоматическая минералогия оптической микроскопией в геометаллургическом контексте: сравнительное исследование руд никелевого проекта Dumont",
+    "authors": "B. De Castro, M. Benzaazoua et al.",
+    "year": "2023",
+    "venue": "Minerals Engineering",
+    "language": "English",
+    "link": "https://www.sciencedirect.com/science/article/abs/pii/S0892687523001036",
+    "scientific_insight": "Количественная минералогия НИКЕЛЕВОЙ руды (пентландит (Ni,Fe)9S8, хизлевудит Ni3S2, аваруит Ni2.5Fe — 'металлургически извлекаемый' Ni) методом автоматической оптической микроскопии по анализу изображений, с валидацией против QEMSCAN по 4 геометаллургическим доменам. Вывод: AOM — надёжная альтернатива QEMSCAN для отнесения проб к доменам обогатимости и оценки распределения Ni по непрозрачным минералам.",
+    "relevance": "Наиболее близкий по объекту прецедент 'оптика → геометаллургический класс' для НИКЕЛЕВЫХ сульфидов: показывает, что по оптике можно надёжно относить пробы к технологическим доменам (аналог наших 3 классов обогатимости) и что сервентинизация/распределение Ni по фазам определяют извлечение."
+   },
+   {
+    "title_original": "Automated ore microscopy based on multispectral measurements of specular reflectance. I – A comparative study of some supervised classification techniques",
+    "title_translation": "Автоматическая рудная микроскопия на основе мультиспектральных измерений зеркального отражения. I — сравнение методов обучения с учителем",
+    "authors": "A. López-Benito, J.C. Catalina, D. Alarcón, Ú. Grunwald, P. Romero, R. Castroviejo (Universidad Politécnica de Madrid, Lab. of Applied Mineralogy)",
+    "year": "2020",
+    "venue": "Minerals Engineering, vol. 146, art. 106136",
+    "language": "English (испанская группа UPM)",
+    "link": "https://www.sciencedirect.com/science/article/pii/S0892687519305473 ; ResearchGate 338006706",
+    "scientific_insight": "Система AMCO: измерение МУЛЬТИСПЕКТРАЛЬНОГО зеркального отражения 40 руд (несколько узкополосных фильтров вместо RGB). Сравнение 4 метрик классификации спектров; успех >99% при Mahalanobis Distance / LDA. Доказано, что оптическая микроскопия может быть НАДЁЖНЫМ инструментом автоматической рудной минералогии при переходе от цвета к спектру отражения.",
+    "relevance": "Научно обосновывает признаковое пространство для идентификации сульфидов: спектр отражения (мультиспектр) намного информативнее RGB и даёт >99% различения рудных минералов. Подсказывает, что если оборудование позволяет спектральные каналы, разделение пирротин/пентландит/халькопирит становится почти безошибочным."
+   },
+   {
+    "title_original": "Multispectral imaging of ore minerals in optical microscopy",
+    "title_translation": "Мультиспектральная визуализация рудных минералов в оптической микроскопии",
+    "authors": "E. Pirard (Université de Liège, Бельгия)",
+    "year": "2004",
+    "venue": "Mineralogical Magazine, 68(2), 323-333",
+    "language": "English (бельгийская школа)",
+    "link": "https://doi.org/10.1180/0026461046820189 ; Cambridge Core: 0B07D0694BBCE07C37B70BC08E88A22B",
+    "scientific_insight": "Основополагающая работа: мультиспектральный анализ изображений превосходит обычную цветную (RGB) съёмку для идентификации рудных минералов, но выявлены ПАРЫ, трудноразделимые даже по спектру отражения (касситерит/хромит, сфалерит/вольфрамит). Согласование с базами спектроскопических данных отражения требует доработки.",
+    "relevance": "Задаёт теоретический потолок и ограничения цвето-/рефлектанс-идентификации, на которые мы опираемся: часть минералов принципиально неотличима по отражению и требует анизотропии/текстуры/SEM. Классический источник по 'что можно и нельзя' по отражательной способности."
+   },
+   {
+    "title_original": "Automatic characterization of iron ore by digital microscopy and image analysis",
+    "title_translation": "Автоматическая характеризация железной руды цифровой микроскопией и анализом изображений",
+    "authors": "J.C. Álvarez Iglesias, O.F.M. Gomes, S. Paciornik и др. (PUC-Rio + Vale S.A.)",
+    "year": "2018",
+    "venue": "Journal of Materials Research and Technology (Elsevier)",
+    "language": "English (бразильская школа PUC-Rio)",
+    "link": "https://www.sciencedirect.com/science/article/pii/S2238785417308025",
+    "scientific_insight": "Полностью автоматическая система на моторизованном отражённом-свете микроскопе: коррелятивная съёмка BRIGHT FIELD + ЦИРКУЛЯРНАЯ ПОЛЯРИЗАЦИЯ, мозаичные панорамы больших площадей аншлифа (тысячи частиц). Классификаторы различают компактный/некомпактный гематит, моно/поликристаллические частицы, текстуры (granular/lamellar/lobular), пористость; на выходе — автоматический PDF-отчёт с квантованием фаз и текстур.",
+    "relevance": "Эталон промышленного пайплайна 'панорама аншлифа → количественная минералогия+текстура' на отражённом свете — ровно наша постановка (панорамные снимки). Показывает, что циркулярная поляризация решает текстурную классификацию, релевантную нашему различению 'рядовая vs труднообогатимая' (крупные простые срастания vs тонкие/замещённые)."
+   },
+   {
+    "title_original": "RLM-SEM Co-Site Microscopy applied to iron ore characterization",
+    "title_translation": "Ко-сайт микроскопия RLM-SEM в применении к характеризации железной руды",
+    "authors": "O.F.M. Gomes, S. Paciornik (PUC-Rio)",
+    "year": "2008",
+    "venue": "ICAM / CETEM (труды конференции)",
+    "language": "English (Бразилия)",
+    "link": "https://www.cetem.gov.br/antigo/images/congressos/2008/CAC00630008.pdf",
+    "scientific_insight": "Метод 'Co-Site Microscopy' — съёмка ОДНОГО И ТОГО ЖЕ участка аншлифа в отражённом свете (RLM) и в SEM с последующим совмещением. Оптика даёт цвет/текстуру и охват площади, SEM — химический контраст там, где отражение неоднозначно; их объединение снимает ограничения каждого метода по отдельности.",
+    "relevance": "Методологическая опора для гибридной валидации: если по отражению два сульфида/фаза неразличимы (предел оптики), Co-Site показывает, как локально подтвердить их SEM. Полезно для построения качественной разметки под наш оптический классификатор."
+   },
+   {
+    "title_original": "Ore Petrography Using Optical Image Analysis: Application to Zaruma-Portovelo Deposit (Ecuador)",
+    "title_translation": "Рудная петрография методом оптического анализа изображений: применение к месторождению Zaruma-Portovelo (Эквадор)",
+    "authors": "E. Berrezueta, B. Ordóñez-Casado и др. (IGME, Испания)",
+    "year": "2016",
+    "venue": "Geosciences (MDPI), 6(2), 30 (открытый доступ)",
+    "language": "English (испаноязычная группа, IGME)",
+    "link": "https://doi.org/10.3390/geosciences6020030 ; https://www.mdpi.com/2076-3263/6/2/30",
+    "scientific_insight": "Количественная рудная петрография по цифровым RGB-изображениям в отражённом свете: сегментация и идентификация сульфидов (пирит, халькопирит, галенит, сфалерит и др.) по цвету/отражательной способности с оценкой модального состава и ассоциаций/срастаний. Демонстрирует воспроизводимость и дешевизну оптического подхода на реальном золото-сульфидном объекте.",
+    "relevance": "Пример полного оптического пайплайна на сульфидных рудах с акцентом на АССОЦИАЦИИ и срастания — прямо про признаки раскрытия/обогатимости. Открытый доступ, детально описывает калибровку цвета и пороги, что переносимо на нашу задачу."
+   },
+   {
+    "title_original": "Automated sulfides quantification by multispectral optical microscopy",
+    "title_translation": "Автоматическое количественное определение сульфидов мультиспектральной оптической микроскопией",
+    "authors": "группа мультиспектральной оптической минералогии (Minerals Engineering)",
+    "year": "2019",
+    "venue": "Minerals Engineering (Elsevier)",
+    "language": "English",
+    "link": "https://www.sciencedirect.com/science/article/abs/pii/S089268751830476X",
+    "scientific_insight": "Работа целиком посвящена АВТОМАТИЧЕСКОМУ квантованию СУЛЬФИДОВ по мультиспектральной отражательной способности: идентификация и подсчёт долей сульфидных фаз в аншлифе оптическими средствами без SEM.",
+    "relevance": "Прямое подтверждение, что доля и видовой состав сульфидов (основа наших классов) измеримы оптикой количественно; методически близко к тому, что нам нужно для оценки крупности/доли сульфидов при разделении 'рядовая vs труднообогатимая'."
+   },
+   {
+    "title_original": "Caractérisation minéralogique quantitative automatisée en microscopie optique et applications à l'étude de minerais dans le cadre d'une approche géométallurgique",
+    "title_translation": "Автоматизированная количественная минералогическая характеризация методом оптической микроскопии и её применение к изучению руд в рамках геометаллургического подхода (докторская диссертация)",
+    "authors": "Benjamin De Castro (научн. рук. M. Benzaazoua и др.)",
+    "year": "2023",
+    "venue": "Thèse de doctorat (PhD), Polytechnique Montréal (PolyPublie 53396)",
+    "language": "Français (French)",
+    "link": "https://publications.polymtl.ca/53396/",
+    "scientific_insight": "Сводная диссертация по трём осям: (1) подготовка аншлифов — открытие АКРИЛОВОЙ смолы вместо эпоксида/эпоксид+сажа; (2) улучшение оптического изображения (борьба с хроматической аберрацией и краевыми эффектами), гиперспектральная оптика; (3) DL-детекция ВСЕХ частиц, включая прозрачные (жильные) минералы. Валидация против QEMSCAN на никелевом проекте Dumont и на флотоконцентратах LaRonde; вывод — оптика надёжная альтернатива QEMSCAN.",
+    "relevance": "Наиболее полный франкоязычный первоисточник, объединяющий всё нужное нам: никелевые сульфиды, детекция прозрачных/жильных фаз (тальк-класс), панорамная оптика и связка 'оптика → геометаллургический домен'. Диссертация = подробное описание методик, переносимых в наш пайплайн."
+   }
+  ],
+  "key_insights": [
+   "ПРЯМОЕ ПОПАДАНИЕ в наш объект: датасет LumenStone S2 (Khvostikov/Korshunov, МГУ) — это медно-никелевые СУЛЬФИДНЫЕ руды с пирротином, пентландитом и халькопиритом; для них уже опубликованы поминеральные метрики сегментации CNN (IoU: пирротин 0.928, халькопирит 0.899, пентландит 0.790; средний 0.88, PA 0.96). Датасет открытый — можно использовать для предобучения/трансфера.",
+   "Главный НАУЧНЫЙ ПРЕДЕЛ отражённого света (De Castro 2022, Pirard 2004): по цвету/отражательной способности надёжно распознаются НЕПРОЗРАЧНЫЕ (рудные) минералы, но ПРОЗРАЧНЫЕ жильные/силикатные фазы (в т.ч. ТАЛЬК, серпентин) почти неотличимы от смолы — критично для нашего 'оталькованного' класса (>10% талька).",
+   "Решение проблемы талька/жильных фаз существует: заливка в АКРИЛОВУЮ смолу + deep learning детекция всех частиц, включая прозрачные (De Castro 2023, Part 2 и диссертация) — рабочий рецепт для количественной оценки доли талька оптикой.",
+   "Мультиспектр > RGB: переход от 3-канального цвета к мультиспектральному зеркальному отражению (AMCO, López-Benito/Castroviejo, UPM; Pirard, Liège) даёт >99% различения рудных минералов и специализированный метод количественного подсчёта сульфидов — но и он бессилен на некоторых парах (касситерит/хромит, сфалерит/вольфрамит).",
+   "АНИЗОТРОПИЯ как ключевой признак сверх цвета: различение оптически близких сульфидов требует съёмки в скрещенных николях (XPL) — минералы 'гаснут'; современные CNN-пайплайны (Korshunov 2025) это уже учитывают. Для однозначных случаев рекомендуется гибрид с SEM (Co-Site Microscopy, Gomes/Paciornik).",
+   "Прецедент 'оптика → технологический класс' на НИКЕЛЕ: De Castro (Dumont nickel, 2023) показал, что автоматическая оптическая микроскопия надёжно относит пробы к геометаллургическим доменам обогатимости и оценивает распределение Ni по фазам, с валидацией против QEMSCAN — прямой методологический аналог наших 3 классов обогатимости.",
+   "Панорамная съёмка + текстурная классификация уже промышленно отработаны (Iglesias/Gomes/Paciornik, PUC-Rio+Vale): моторизованный отражённый-свет микроскоп, мозаики тысяч частиц, циркулярная поляризация для текстур (granular/lamellar/lobular), пористость и авто-отчёт — прямой шаблон для нашего пайплайна и для текстурного разделения 'рядовая vs труднообогатимая' (крупные простые срастания vs тонкие/эмульсионные).",
+   "Языковое разнообразие источников подтверждено: сильная РУССКАЯ школа (МГУ/ИГЕМ, LumenStone, аншлифы Cu-Ni), франкоязычная (Polytechnique Montréal, De Castro), испанская (UPM/IGME, Castroviejo/Berrezueta, мультиспектр) и бразильская (PUC-Rio, Paciornik/Gomes) — все работают именно по автоматическому анализу руд в отражённом свете."
+  ]
+ },
+ {
+  "angle": "Русскоязычная / отечественная научная литература по технологической минералогии сульфидных медно-никелевых руд Норильской группы: минералогические и текстурные основы разделения на 3 класса обогатимости (рядовая / труднообогатимая / оталькованная), количественная оценка раскрытия сульфидов по аншлифам и автоматический (в т.ч. нейросетевой) анализ рудной оптики в отражённом свете.",
+  "papers": [
+   {
+    "title_original": "Морфометрические параметры сульфидных руд как основа селективной рудоподготовки сырья",
+    "title_translation": "Morphometric parameters of sulphide ores as a basis for selective ore preparation",
+    "authors": "Дурягина А.М., Таловина И.В., Либервирт Х. (Liebrewirth H.), Илалова Р.К.",
+    "year": "2022",
+    "venue": "Записки Горного института (Journal of Mining Institute), т. 256, с. 527-538",
+    "language": "русский (резюме англ.)",
+    "link": "https://pmi.spmi.ru/index.php/pmi/article/view/15841 ; DOI: 10.31897/PMI.2022.76",
+    "scientific_insight": "На вкрапленных медно-никелевых рудах центральных флангов и богатых медистых рудах западных флангов Октябрьского месторождения (Норильский район; 44 образца, 132 шлифа) количественно измерены морфометрические параметры рудных зёрен по полированным шлифам: наиболее информативны площадь зерна, периметр, неровность (изрезанность) края, сферичность, вытянутость и среднее расстояние между зёрнами. Установлена обратная зависимость сферичности от площади зерна (крупные агрегаты — более ксеноморфные, изрезанные); в рудных зонах площадь рудных минералов возрастает в 2-3 раза. Авторы прямо связывают эти параметры с выбором стадий и целесообразностью СЕЛЕКТИВНОГО измельчения.",
+    "relevance": "Это самая прямая отечественная методическая опора для нашей задачи: показывает, что именно измеримые по аншлифу текстурно-морфометрические признаки (размер вкрапленности, форма, изрезанность границ, межзёрновое расстояние) являются количественной основой обогатимости и раскрытия сульфидов. Даёт готовый список фичей для автоклассификации 'рядовая vs труднообогатимая' (крупные простые зёрна против мелких изрезанных агрегатов) на материале именно Норильска/Октябрьского."
+   },
+   {
+    "title_original": "От визуальной диагностики к глубокому обучению: автоматическое определение минералов на фотографиях аншлифов",
+    "title_translation": "From visual diagnostics to deep learning: automatic mineral identification in polished section images",
+    "authors": "Коршунов Д.М., Хвостиков А.В., Николаев Г.В., Сорокин Д.В., Индычко О.И., Богуславский М.А., Крылов А.С. (ИГЕМ РАН + ф-т ВМК МГУ)",
+    "year": "2025",
+    "venue": "Mining Science and Technology (Russia) / Горные науки и технологии, т. 10, № 3, с. 232-244",
+    "language": "русский/английский (двуязычный журнал)",
+    "link": "https://journals.rcsi.science/2500-0632/article/view/350750 ; DOI: 10.17073/2500-0632-2025-05-416",
+    "scientific_insight": "Свёрточные нейросети семантической сегментации (U-Net, PSPNet, UPerNet) обучены попиксельно распознавать 9 рудных минералов на изображениях аншлифов в ОТРАЖЁННОМ свете. Достигнута точность IoU до 0.88 и pixel accuracy до 0.96. Ключевые технические приёмы: цветовая коррекция (нормализация под разные съёмки микроскопа) и оригинальный метод сэмплирования для компенсации дисбаланса классов минералов — то есть решены ровно те проблемы, что и в нашем датасете панорам аншлифов.",
+    "relevance": "Прямой методологический прототип нашего пайплайна: DL-сегментация минералов по оптике отражённого света отечественной группой (ИГЕМ+МГУ). Обосновывает переход от 'мешка признаков' к попиксельной карте минералов, из которой затем считаются доли фаз, срастания и раскрытие — то, что нужно для отделения оталькованной (>10% талька) и труднообогатимой (тонкие срастания) руды. Показывает реально достижимую точность и приёмы борьбы с дисбалансом/цветовой вариабельностью."
+   },
+   {
+    "title_original": "Технологическая оценка обогащения вкрапленной медно-никелевой руды",
+    "title_translation": "Technological assessment of the beneficiation of disseminated copper-nickel ore",
+    "authors": "Алгебраистова Н.К., Михеев В.Г., Маркова С.А., Гайворонская М.В., Кондратьева А.А. и др.",
+    "year": "2013",
+    "venue": "Горный информационно-аналитический бюллетень (ГИАБ)",
+    "language": "русский",
+    "link": "https://cyberleninka.ru/article/n/tehnologicheskaya-otsenka-obogascheniya-vkraplennoy-medno-nikelevoy-rudy",
+    "scientific_insight": "Никель/кобальт несёт пентландит, медь — практически весь халькопирит; вмещающая порода на 65-90% серпентин. Ключевой текстурный фактор плохой обогатимости — сложный характер срастания пентландита с магнетитом: магнетит образует 'рубашку' вокруг сульфидов и проникает по многочисленным микротрещинам в пентландите. Мелкая и тонкая вкрапленность требует тонкого измельчения; предложена магнито-флотационная схема с извлечением Ni до 72.7%.",
+    "relevance": "Демонстрирует причинно-следственную цепочку текстура → раскрытие → извлечение именно на вкрапленной Cu-Ni руде: 'рубашка' магнетита и микротрещинная взаимопрорастаемость = плохое раскрытие = труднообогатимость. Это микротекстурный признак, который надо детектировать на аншлифе, чтобы отличать труднообогатимую руду."
+   },
+   {
+    "title_original": "Повышение степени разделения пентландит-пирротиновых продуктов селективной флотации сульфидных медно-никелевых руд",
+    "title_translation": "Increasing the degree of separation of pentlandite-pyrrhotite products in selective flotation of sulphide copper-nickel ores",
+    "authors": "Лесникова Л.С. (диссертация, науч. рук. — ИРНИТУ)",
+    "year": "2018",
+    "venue": "Диссертация к.т.н., ВАК 25.00.13 «Обогащение полезных ископаемых», ИРНИТУ",
+    "language": "русский",
+    "link": "https://www.dissercat.com/content/povyshenie-stepeni-razdeleniya-pentlandit-pirrotinovykh-produktov-selektivnoi-flotatsii-sulf",
+    "scientific_insight": "Близость флотационных свойств пирротина и пентландита и их взаимопрорастание неизбежно ведут к разубоживанию никелевого концентрата. Контрастность разделения повышают окислением поверхности (на пирротине растут моносульфидная сера/полисульфиды, на пентландите — гидроксиды железа), механоактивацией в щёлочи и применением диметилдитиокарбамата натрия (ДМДК) без окисления воздухом.",
+    "relevance": "Объясняет металлургическую суть 'труднообогатимости' на уровне срастаний: тонкое взаимопрорастание пентландита с пирротином не раскрывается при измельчении и депрессирует качество Ni-концентрата. Подтверждает, что признак 'тонкие/эмульсионные срастания сульфидов' на аншлифе — прямой предиктор труднообогатимого класса."
+   },
+   {
+    "title_original": "Сульфидные медно-никелевые руды норильских месторождений",
+    "title_translation": "Sulphide copper-nickel ores of the Norilsk deposits",
+    "authors": "Генкин А.Д., Дистлер В.В., Гладышев Г.Д., Гроховская Т.Л., Евстигнеева Т.Л., Коваленкер В.А., Лапутина И.П., Смирнов А.В., Филимонова А.А. (ИГЕМ АН СССР)",
+    "year": "1981",
+    "venue": "Издательство «Наука», Москва (монография)",
+    "language": "русский",
+    "link": "https://www.geokniga.org/books/21746",
+    "scientific_insight": "Фундаментальное описание типов норильских руд (сплошные/массивные, вкрапленные в интрузиве, прожилково-вкрапленные во вмещающих породах), их минералогии, парагенетических ассоциаций и зонального строения залежей; поведение сульфидов при магматической дифференциации и кристаллизации сульфидного расплава, обусловливающее структуры распада твёрдых растворов (пирротин-пентландит, эмульсионный халькопирит/кубанит).",
+    "relevance": "База минералого-генетической классификации, из которой вытекают наши 3 текстурных класса: крупнокристаллические массивные/богатые срастания (рядовая) против эмульсионных структур распада и тонкой вкрапленности (труднообогатимая). Задаёт эталонную терминологию текстур и ассоциаций именно для Норильска."
+   },
+   {
+    "title_original": "Технологическая минералогия и оценка руд",
+    "title_translation": "Technological mineralogy and evaluation of ores",
+    "authors": "Изоитко В.М.",
+    "year": "1997",
+    "venue": "Издательство «Наука», Санкт-Петербург (монография/учебник)",
+    "language": "русский",
+    "link": "https://www.geokniga.org/books/2880",
+    "scientific_insight": "Систематизирует типоморфные особенности минералов и руд, влияющие на обогащение: текстурно-структурные и гранулометрические характеристики, крупность вкрапленности, характер срастаний (сростки), раскрытие при измельчении, и методику геолого-технологической оценки/прогноза обогатимости на разных стадиях. Формулирует, что достоверность прогноза обогатимости определяется полнотой изучения вещественного состава и точностью определения технологически значимых текстурно-структурных и морфометрических параметров.",
+    "relevance": "Каноническая отечественная методология, обосновывающая сам принцип нашей задачи: обогатимость предсказуема по количественным текстурным признакам аншлифа (раскрытие, сростки, крупность вкрапленности). Даёт понятийный каркас 'типоморфизм → технологические свойства → класс обогатимости'."
+   },
+   {
+    "title_original": "Текстуры и структуры руд / Атлас структур и текстур руд",
+    "title_translation": "Textures and structures of ores / Atlas of ore structures and textures",
+    "authors": "Генкин А.Д. и др. (школа ИГЕМ)",
+    "year": "1958-1964",
+    "venue": "Издательство АН СССР / «Наука» (монографии, атлас)",
+    "language": "русский",
+    "link": "https://www.geokniga.org/books/19809",
+    "scientific_insight": "Классификационный атлас текстур и структур руд, включая структуры распада твёрдого раствора (эмульсионная, решётчатая, пламеневидная вкрапленность), взаимопрорастания, замещения и цементации — с диагностикой по аншлифам в отражённом свете. Именно эмульсионная структура распада (тонкодисперсные включения одной сульфидной фазы в другой) обозначена как признак трудного раскрытия при измельчении.",
+    "relevance": "Даёт визуальный словарь текстур для разметки/обучения модели: как выглядит 'эмульсионная вкрапленность' и 'тонкие срастания' (труднообогатимая) против крупных однородных выделений (рядовая). Опорный источник для формулировки текстурных дескрипторов, отличающих классы."
+   },
+   {
+    "title_original": "Современные методы технологической минералогии (Плаксинские чтения)",
+    "title_translation": "Modern methods of technological mineralogy (Plaksin readings, proceedings)",
+    "authors": "Сб. трудов междунар. совещания «Плаксинские чтения» (ИПКОН РАН и др.)",
+    "year": "2011-2012",
+    "venue": "Материалы международного совещания «Плаксинские чтения», ИПКОН РАН",
+    "language": "русский",
+    "link": "http://plaksin.ipkonran.ru/download/Сборник%20Плаксинские%20чтения-2011.pdf",
+    "scientific_insight": "Обобщает современный инструментарий технологической минералогии: оптико-минералогический анализ аншлифов (ручной и автоматизированный), автоматический подсчёт площадей минералов, оценка раскрытия минералов и качества сростков, увязка минерального состава с поведением руды в процессах обогащения; методы выявления полезных и вредных (флотоактивных) минералов и их ассоциаций.",
+    "relevance": "Задаёт отраслевой стандарт того, какие количественные параметры обогатимости извлекают из аншлифов (доли фаз, раскрытие, сростки, ассоциации), что напрямую переносится в фичи для автоклассификации трёх наших классов."
+   }
+  ],
+  "key_insights": [
+   "Отечественная технологическая минералогия прямо постулирует принцип нашей задачи: обогатимость руды предсказуема по КОЛИЧЕСТВЕННЫМ текстурно-структурным признакам аншлифа — крупность вкрапленности, форма и изрезанность границ зёрен, характер срастаний (сростки), степень раскрытия. Наиболее конкретный источник — Дурягина и др. (2022, Записки Горного института, DOI 10.31897/PMI.2022.76) именно по Октябрьскому месторождению Норильска: набор морфометрических фичей (площадь, периметр, неровность края, сферичность, вытянутость, межзёрновое расстояние) как основа селективной рудоподготовки. Это готовый список признаков для отделения рядовой руды (крупные простые зёрна) от труднообогатимой (мелкие изрезанные агрегаты).",
+   "Труднообогатимость на уровне минералогии = структуры распада твёрдого раствора и тонкое взаимопрорастание сульфидов. Эмульсионная/решётчатая вкрапленность (атлас текстур Генкина), магнетитовая 'рубашка' и микротрещинное проникновение магнетита в пентландит (Алгебраистова и др., 2013), взаимопрорастание пентландита с пирротином с близкими флотосвойствами (дисс. Лесниковой, 2018) — всё это НЕ раскрывается при измельчении и депрессирует качество/извлечение Ni. Значит, текстурный дескриптор 'тонкие/эмульсионные срастания' на аншлифе — прямой предиктор труднообогатимого класса.",
+   "Оталькованный класс объясняется флотохимией талька, а не оптикой сульфидов: тальк природно гидрофобен (краевой угол ~90°), самопроизвольно флотируется и загрязняет/депрессирует Ni-концентрат; на фабриках его давят КМЦ (карбоксиметилцеллюлозой) и кальцинированной содой при pH 8-10. Брекчиевые руды Норильска описаны как обломки ОТАЛЬКОВАННЫХ серпентинитов, сцементированные сульфидами. Прямой отдельной peer-reviewed статьи именно про Норильск-'оталькованная руда >10% талька → потери Ni' в открытом доступе найти не удалось — это заметный пробел; обоснование собирается из минералогии брекчий + общей флотационной химии талька. Для оптики важно, что тальк/серпентин/хлорит — светлая нерудная матрица в отражённом свете, отличимая от сульфидов.",
+   "Методически прямой прототип нашего CV-пайплайна уже опубликован отечественной группой: Коршунов и др. (2025, Mining Science and Technology Russia, DOI 10.17073/2500-0632-2025-05-416, ИГЕМ РАН + ВМК МГУ) — семантическая сегментация 9 рудных минералов на аншлифах в отражённом свете нейросетями (U-Net/PSPNet/UPerNet), IoU до 0.88, PA до 0.96, с цветовой нормализацией и специальным сэмплированием под дисбаланс классов. Это подтверждает достижимость попиксельной минеральной карты, из которой считаются доли фаз, срастания и раскрытие для классификации обогатимости.",
+   "Существуют промышленные российские инструменты автоматической рудной микроскопии, релевантные как ориентир и потенциальный бенчмарк: линейка SIAMS (SIAMS Geo для минералогии/петрографии; ML-модуль SIAMS AIM с нейросетевой сегментацией), а также классические автоматические анализаторы площадей минералов. Плаксинские чтения (ИПКОН РАН, 2011-2012) фиксируют отраслевой стандарт параметров, извлекаемых из аншлифа: доли фаз, раскрытие минералов, качество сростков, минеральные ассоциации, идентификация вредных флотоактивных минералов — это и есть целевые выходные признаки для наших 3 классов.",
+   "Каркас классификации опирается на фундаментальную норильскую школу: монография Генкина, Дистлера и др. (1981, «Наука») по сульфидным Cu-Ni рудам норильских месторождений задаёт эталонные типы руд (массивные/сплошные, вкрапленные в интрузиве, прожилково-вкрапленные) и парагенезисы, а учебник Изоитко (1997, «Технологическая минералогия и оценка руд») — методологию перехода 'типоморфизм минералов → технологические свойства → прогноз обогатимости'. Вместе они дают и терминологию текстур для разметки, и обоснование, почему классы делятся именно так."
+  ]
+ },
+ {
+  "angle": "GEOMETALLURGY и TEXTURE→PROCESSING: научная база «обогатимости по текстуре». Ниже — реально найденные рецензируемые работы, диссертации и труды конференций, которые обосновывают саму постановку 3 технологических классов как «текстурных архетипов». Ключевая логика литературы: руды одинакового химсостава ведут себя при обогащении по-разному ИСКЛЮЧИТЕЛЬНО из-за текстуры (размер зёрен, тип срастаний, ассоциации, раскрытие сульфидов и характер вмещающей нерудной фазы). Это позволяет дискретизировать текстуру в конечный набор архетипов, каждый из которых имеет характерное поведение при измельчении (liberation) и флотации (recovery/grade) — что и есть прямая научная опора для деления руд на рядовую / труднообогатимую / оталькованную. Отдельно закрыты три оси задачи: (1) тонкие/эмульсионные срастания пентландита-пирротина → плохое раскрытие → труднообогатимая; (2) естественная флотируемость талька/серпентина → депрессия Ni → оталькованная; (3) количественный автоматический анализ руд по ОПТИКЕ в отражённом свете (в т.ч. CNN-сегментация той же норильской минеральной ассоциации). Поиск вёлся на английском, русском и испанском.",
+  "papers": [
+   {
+    "title_original": "Development of a geometallurgical framework to quantify mineral textures for process prediction",
+    "title_translation": "Разработка геометаллургической схемы для количественной оценки минеральных текстур с целью прогноза процесса обогащения",
+    "authors": "Lund, C.; Lamberg, P.; Lindberg, T.",
+    "year": "2015",
+    "venue": "Minerals Engineering, vol. 82, pp. 61-77, DOI 10.1016/j.mineng.2015.04.004",
+    "language": "English",
+    "link": "https://www.sciencedirect.com/science/article/abs/pii/S0892687515001417",
+    "scientific_insight": "Фундаментальная работа, вводящая понятие 'текстурного архетипа'. Трёхшаговая схема на примере железорудного м-ния Malmberget: (1) геологическая модель количественно описывает модальный состав И текстуры, группируя их в конечную библиотеку дискретных текстурных архетипов; (2) модель дробления/измельчения прогнозирует распределение раскрытия (liberation distribution) для потомков каждого архетипа; (3) технологическая модель выдаёт металлургический отклик — качество концентрата (grade) и извлечение (recovery). Доказано: руды одинакового химсостава дают разный технологический отклик именно из-за текстуры, и текстуру можно свести к конечному числу классов с характерным поведением при раскрытии.",
+    "relevance": "Прямое научное обоснование самой постановки 3 классов: рядовая/труднообогатимая/оталькованная — это по сути 'текстурные архетипы' в смысле Lund. Показывает, что конечный набор текстурных классов закономерно отображается в разное раскрытие сульфидов → разное извлечение. Каркас для перевода наблюдаемой под микроскопом текстуры в прогноз обогатимости."
+   },
+   {
+    "title_original": "A new method to quantify mineral textures for geometallurgy",
+    "title_translation": "Новый метод количественной оценки минеральных текстур для геометаллургии",
+    "authors": "Lund, C.; Lamberg, P.; Lindberg, T.",
+    "year": "2013",
+    "venue": "Proc. Process Mineralogy '13 / Minerals Engineering (open PDF, DiVA/LTU)",
+    "language": "English",
+    "link": "https://www.diva-portal.org/smash/get/diva2:1009172/FULLTEXT01.pdf",
+    "scientific_insight": "Вводит Association Indicator Matrix (AIM) и локальные бинарные шаблоны (LBP) как количественные дескрипторы текстуры: AIM измеряет частоту контактов фаза-фаза (кто с кем граничит и как часто) — фактически численный аналог 'ассоциации/координационного числа' сульфидов. Из 2D-карт минералов извлекаются признаки, которые далее транслируются в твёрдость, производительность, ассоциации и раскрытие. Показывает, как формализовать 'ассоциацию сульфидов' в матрицу смежности, пригодную для классификации.",
+    "relevance": "Даёт конкретный, воспроизводимый аппарат (AIM/LBP) для оцифровки сульфидной ассоциации и характера срастаний из наших панорамных оптических снимков — то есть признаки, отделяющие рядовую (простые срастания, мало контактов Ni-фаза/нерудное) от труднообогатимой (много мелких контактов, эмульсия)."
+   },
+   {
+    "title_original": "Geometallurgy – A tool for better resource efficiency",
+    "title_translation": "Геометаллургия — инструмент повышения ресурсоэффективности",
+    "authors": "Lund, C.; Lamberg, P.",
+    "year": "2014",
+    "venue": "European Geologist Journal, no. 37, pp. 39-43 (обзор)",
+    "language": "English",
+    "link": "https://www.researchgate.net/publication/282152217_Geometallurgy_-_A_tool_for_better_resource_efficiency",
+    "scientific_insight": "Обзор, позиционирующий геометаллургию между рудной геологией и металлургией и прямо утверждающий: использование ОРЕ-ТЕКСТУР позволяет дать первую, дешёвую оценку технологического поведения руды уже на ранних стадиях проекта, до дорогих металлургических тестов. Текстура — легитимный прокси обогатимости.",
+    "relevance": "Методологическое обоснование самого подхода 'обогатимость по текстуре/изображению': классификация руд по оптике вместо/до дорогого тесто-обогащения — именно то, что делает наш проект."
+   },
+   {
+    "title_original": "The influence of textural variation and gangue mineralogy on recovery of copper by flotation from porphyry ore – a review",
+    "title_translation": "Влияние вариаций текстуры и минералогии нерудной части на извлечение меди флотацией из порфировых руд — обзор",
+    "authors": "Cropp, A.F.; Goodall, W.R.; Bradshaw, D.J.",
+    "year": "2013",
+    "venue": "The Second AusIMM International Geometallurgy Conference (GeoMet), Brisbane",
+    "language": "English",
+    "link": "https://www.researchgate.net/publication/292151414_The_influence_of_textural_variation_and_gangue_mineralogy_on_recovery_of_copper_by_flotation_from_porphyry_ore_a_review",
+    "scientific_insight": "Обзор систематизирует два независимых текстурных механизма падения извлечения: (а) характер срастаний/запирание сульфидов (тонкая/сложная текстура требует более тонкого помола для раскрытия → рост затрат и потери в шламах); (б) минералогия нерудной части — филлосиликаты (тальк/хлорит) ухудшают флотацию через естественную флотируемость, ошламование и реологию пульпы.",
+    "relevance": "Закрывает сразу две наши оси одновременно: тонкие срастания → труднообогатимая, а нерудная фаза (тальк) → оталькованная. Прямое литературное подтверждение, что именно эти два текстурно-минералогических фактора и определяют классы обогатимости."
+   },
+   {
+    "title_original": "Automated characterisation of intergrowth textures in mineral particles. A case study",
+    "title_translation": "Автоматическая характеризация текстур срастания в минеральных частицах. Пример применения",
+    "authors": "Pérez-Barnuevo, L.; Pirard, E.; Castroviejo, R.",
+    "year": "2013",
+    "venue": "Minerals Engineering, vol. 52, pp. 136-142, DOI 10.1016/j.mineng.2013.05.001",
+    "language": "English",
+    "link": "https://oa.upm.es/26163/1/INVE_MEM_2013_162885.pdf",
+    "scientific_insight": "Автоматический анализ изображений оптической микроскопии в ОТРАЖЁННОМ свете классифицирует типы срастаний на уровне частиц (простые, сложные, эмульсионные/взаимные) и вычисляет текстурные дескрипторы, количественно описывающие контакты фаз и площадь экспонирования поверхности минерала. Показано: сложные и эмульсионные срастания фундаментально ограничивают достижимое раскрытие → снижают качество концентрата и извлечение; цифровой анализ даёт объективные данные, превосходящие субъективную визуальную оценку.",
+    "relevance": "Это метод РОВНО для нашего типа данных (reflected-light полированные аншлифы). Прямо поддерживает отделение труднообогатимой (эмульсия/тонкие срастания, замещение сульфидов) от рядовой (простые крупные срастания) по количественной текстуре из ore-microscopy изображений."
+   },
+   {
+    "title_original": "From visual diagnostics to deep learning: automatic mineral identification in polished section images",
+    "title_translation": "От визуальной диагностики к глубокому обучению: автоматическая идентификация минералов на изображениях полированных аншлифов",
+    "authors": "Korshunov, Khvostikov, Nikolaev, Sorokin, Indychko, Boguslavskii, Krylov",
+    "year": "2025",
+    "venue": "Mining Science and Technology (Russia) / Горные науки и технологии, DOI 10.17073/2500-0632-2025-05-416",
+    "language": "Russian/English (bilingual)",
+    "link": "https://mst.misis.ru/jour/article/view/974",
+    "scientific_insight": "CNN-сегментация (PSPNet + ResNet18) 9 рудных минералов в отражённом свете — включая пирротин, пентландит, халькопирит, магнетит (ровно норильская ассоциация). Достигнуто IoU=0.88, pixel accuracy=0.96. Инновации напрямую применимы к нашей задаче: балансировка классов при дисбалансе минералов, цветокоррекционная матрица под разные микроскопы/освещение, СОВМЕСТНАЯ обработка PPL+XPL (даёт +3-12% на анизотропных минералах), алгоритм сшивки панорам для крупных аншлифов. Открыты датасет LumenStone (158 размеченных изображений) и библиотека petroscope.",
+    "relevance": "Практически идентичная модальность данных (панорамные reflected-light аншлифы, та же минеральная ассоциация). Готовый переносимый baseline сегментации сульфидов и открытый датасет — прямой инструмент для нашего оптического пайплайна и для расчёта модального состава/талька/раскрытия."
+   },
+   {
+    "title_original": "Influence of mineralogy and ore texture on pentlandite flotation at the Nkomati nickel mine, South Africa",
+    "title_translation": "Влияние минералогии и текстуры руды на флотацию пентландита на никелевом руднике Nkomati, ЮАР",
+    "authors": "полный список авторов — по DOI (ScienceDirect)",
+    "year": "2013",
+    "venue": "Minerals Engineering, vol. 54, pp. 63-78, DOI 10.1016/j.mineng.2013.04.009",
+    "language": "English",
+    "link": "https://www.sciencedirect.com/science/article/abs/pii/S0892687513001143",
+    "scientific_insight": "Изучены 13 минералогически и текстурно различных Ni-сульфидных руд (bleb / вкрапленные / массивные / полумассивные / сетчато-текстурные). Главный вывод: раскрытие пентландита напрямую коррелирует с крупностью помола, а та — с уровнем извлечения Ni; ОПТИМАЛЬНАЯ крупность помола зависит от ТЕКСТУРЫ (тонко-сросшиеся руды требуют более тонкого помола). Флотационный отклик прямо назван 'сложной функцией минералогии и текстуры руды'. Разные текстурные типы дают эрратичное извлечение при едином режиме.",
+    "relevance": "Ближайший аналог нашей задачи — та же система пентландит/пирротин/халькопирит. Эмпирически доказывает цепочку: текстурный класс → требуемый помол → извлечение, то есть физическую основу различия рядовая vs труднообогатимая (тонкие срастания = плохое раскрытие при стандартном помоле)."
+   },
+   {
+    "title_original": "Using Process Mineralogy as a Tool to Investigate Blending Potential of the Pentlandite-Bearing Ores at the Nkomati Ni Mine in South Africa",
+    "title_translation": "Процессная минералогия как инструмент оценки потенциала шихтования пентландитсодержащих руд рудника Nkomati (ЮАР)",
+    "authors": "Mishra, G.; Viljoen, K.S.; Mouri, H.",
+    "year": "2022",
+    "venue": "Minerals, vol. 12(5), 649, DOI 10.3390/min12050649",
+    "language": "English",
+    "link": "https://doi.org/10.3390/min12050649",
+    "scientific_insight": "Процессно-минералогический анализ показывает, как текстурные типы Ni-руд определяют извлечение и качество: для PCMZ-руд помол P80≈75 мкм даёт максимальные содержания Ni в концентрате 7.5-8.1%; вариативность минералогии и текстуры вызывает эрратичное извлечение, которое можно сгладить шихтованием текстурно-различных руд. Раскрытие пентландита — ключевой управляемый параметр.",
+    "relevance": "Показывает практическую ценность классификации руд по текстуре именно для управления обогащением (шихтование, выбор режима). Подтверждает, что дискретные текстурные классы Ni-руды имеют разный технологический отклик — прямая мотивация нашей 3-классовой постановки."
+   },
+   {
+    "title_original": "A geometrical texture model for multi-mineral liberation prediction",
+    "title_translation": "Геометрическая модель текстуры для прогноза раскрытия многоминеральных систем",
+    "authors": "Hilden, M.M.; Powell, M.S.",
+    "year": "2017",
+    "venue": "Minerals Engineering, vol. 111, pp. 25-35",
+    "language": "English",
+    "link": "https://www.sciencedirect.com/science/article/abs/pii/S0892687517301176",
+    "scientific_insight": "Метод численной реконструкции 3D-текстуры для симуляции дробления и прогноза раскрытия НЕ бинарных, а МНОГОминеральных руд. Модель захватывает размер и форму зёрен, пространственное расположение и смежность/ассоциацию фаз, из 2D-сечений генерирует реалистичные частицы дробления и их liberation-характеристики.",
+    "relevance": "Методологический мост от наблюдаемой сульфидной ассоциации/срастаний к прогнозируемому раскрытию именно для многосульфидных норильских руд (пирротин+пентландит+халькопирит+магнетит), где бинарные модели неприменимы."
+   },
+   {
+    "title_original": "Comparison of Seven Texture Analysis Indices for Their Applicability to Stereological Correction of Mineral Liberation Assessment in Binary Particle Systems",
+    "title_translation": "Сравнение семи индексов анализа текстуры на применимость к стереологической коррекции оценки раскрытия в бинарных системах частиц",
+    "authors": "Ueda, T.; Oki, T.; Koyanaka, S.",
+    "year": "2017",
+    "venue": "Minerals, vol. 7(11), 222, DOI 10.3390/min7110222",
+    "language": "English",
+    "link": "https://www.mdpi.com/2075-163X/7/11/222/htm",
+    "scientific_insight": "Систематически сравнивает семь количественных индексов текстуры (в т.ч. меры контакта/смежности фаз — аналог координационного числа/ассоциации) по тому, насколько хорошо они предсказывают и корректируют оценку раскрытия по 2D-сечениям (стереологический сдвиг: 2D-сечение занижает истинное 3D-раскрытие). Показывает, какие индексы устойчиво отражают геометрию ассоциации.",
+    "relevance": "Готовое меню конкретных признаков (индексы контакта/ассоциации фаз), вычислимых из наших 2D оптических изображений, плюс предупреждение о стереологическом смещении — важно, т.к. по плоскому аншлифу мы видим 2D-срез 3D-текстуры и рискуем недооценить запертость сульфидов."
+   },
+   {
+    "title_original": "Automated recognition of drill core textures: A geometallurgical tool for mineral processing prediction",
+    "title_translation": "Автоматическое распознавание текстур керна: геометаллургический инструмент прогноза обогащения",
+    "authors": "Koch, P.-H. и др.",
+    "year": "2019",
+    "venue": "Minerals Engineering (online 2018), pii S0892687517303229",
+    "language": "English",
+    "link": "https://www.sciencedirect.com/science/article/abs/pii/S0892687517303229",
+    "scientific_insight": "Методология автоматического распознавания текстур по 2D цифровым изображениям керна: текстуры группируются в паттерны, и технологическое поведение НОВОГО образца прогнозируется простым отнесением его к текстурной группе. Автоматический анализ менее подвержен субъективному смещению, быстрее и воспроизводимее ручной минераграфии.",
+    "relevance": "Прямой методологический прецедент нашего подхода: классифицировать образец по текстурному паттерну на изображении и по нему предсказать обогатимость. Обоснование, что 'классификация по картинке → прогноз процесса' — рабочая научная схема, а не эвристика."
+   },
+   {
+    "title_original": "A method for rapid estimation of processing behaviour based on ore texture",
+    "title_translation": "Метод быстрой оценки технологического поведения на основе текстуры руды",
+    "authors": "коллектив (Minerals Engineering, 2021)",
+    "year": "2021",
+    "venue": "Minerals Engineering, vol. 171, 107111, pii S089268752100340X",
+    "language": "English",
+    "link": "https://www.sciencedirect.com/science/article/abs/pii/S089268752100340X",
+    "scientific_insight": "Использует высокоразрешающие текстурные данные масштаба керна для БЫСТРОЙ оценки поведения при обогащении (дробимость/раскрытие) при сокращённом объёме физических тестов. Установлена связь текстура→твёрдость: гетерогенные текстуры дают более твёрдые/трудноизмельчаемые руды, гомогенные — более мягкие.",
+    "relevance": "Обосновывает саму идею image-based прокси обогатимости/дробимости с минимумом лабораторных тестов — концептуальный аналог предсказания наших классов прямо по оптическим снимкам. Связь 'гетерогенная текстура → труднее' согласуется с труднообогатимым классом."
+   },
+   {
+    "title_original": "Automated ore texture classification using µ-XRF imaging and unsupervised machine learning: Correlation with surface hardness",
+    "title_translation": "Автоматическая классификация текстур руды по µ-XRF изображениям и обучению без учителя: корреляция с твёрдостью поверхности",
+    "authors": "коллектив (Minerals Engineering, 2025)",
+    "year": "2025",
+    "venue": "Minerals Engineering, 2025, pii S0892687525005722",
+    "language": "English",
+    "link": "https://www.sciencedirect.com/science/article/pii/S0892687525005722",
+    "scientific_insight": "Пайплайн без учителя: минеральные карты → grayscale → патчи → признаки GLCM (матрицы совместной встречаемости уровней серого, текстурные признаки) → PCA → k-means кластеризация в текстурные классы. Полученные текстурные кластеры коррелируют с измеренной твёрдостью поверхности (прокси дробимости).",
+    "relevance": "Показывает, что unsupervised текстурные признаки (GLCM+PCA+кластеризация) на изображениях руды дают физически осмысленные классы, связанные с обогатимостью/дробимостью. Прямой рецепт признаков для нашей оптической классификации, в т.ч. при слабой/частичной разметке."
+   },
+   {
+    "title_original": "Machine Learning in Geometallurgy: A Review of Advances and Case Studies from Peru's Mining Sector",
+    "title_translation": "Машинное обучение в геометаллургии: обзор достижений и кейсов горного сектора Перу",
+    "authors": "коллектив (IIETA)",
+    "year": "2025",
+    "venue": "Ingénierie des Systèmes d'Information (ISI), IIETA, DOI 10.18280/isi.301006",
+    "language": "English",
+    "link": "https://www.iieta.org/journals/isi/paper/10.18280/isi.301006",
+    "scientific_insight": "Обзор data-driven геометаллургии: ML-модели улавливают нелинейные связи между геологическими признаками и технологическими откликами (извлечение, производительность, качество концентрата, дробимость, раскрытие). Отмечено, что деревья решений/ансамбли особенно подходят для моделирования извлечения из-за неаддитивности переменных обогащения.",
+    "relevance": "Обосновывает выбор ML для связи наблюдаемых признаков (в нашем случае — текстурных с оптики) с классом обогатимости и предупреждает о неаддитивности (нельзя линейно суммировать вклад минералов) — важно при проектировании нашей модели и целевых меток."
+   },
+   {
+    "title_original": "The effect of a new polysaccharide on the depression of talc and the flotation of a nickel–copper sulfide ore",
+    "title_translation": "Влияние нового полисахарида на депрессию талька и флотацию медно-никелевой сульфидной руды",
+    "authors": "коллектив (Minerals Engineering, 2015)",
+    "year": "2015",
+    "venue": "Minerals Engineering, 2015, pii S0892687515000783",
+    "language": "English",
+    "link": "https://www.sciencedirect.com/science/article/abs/pii/S0892687515000783",
+    "scientific_insight": "Тальк — самый распространённый естественно-гидрофобный нерудный минерал в комплексных Ni-сульфидных рудах; чистый тальк флотируется в широком диапазоне pH, извлечение талька >90% достигается ОДНИМ вспенивателем (без коллектора). Без селективной депрессии (полисахариды/КМЦ, гуар) тальк идёт в концентрат, повышая MgO и снижая качество; депрессия талька без потерь Ni — ключевая технологическая проблема, высокоталькистые руды часто считались 'необрабатываемыми'.",
+    "relevance": "Металлургическое обоснование выделения ОТАЛЬКОВАННОГО класса (>10% талька): естественная флотируемость талька природно депрессирует извлечение Ni и загрязняет концентрат MgO. Объясняет, ПОЧЕМУ доля талька на аншлифе — самостоятельный решающий признак обогатимости."
+   },
+   {
+    "title_original": "Talc–serpentine interactions and implications for talc depression",
+    "title_translation": "Взаимодействия тальк–серпентин и их следствия для депрессии талька",
+    "authors": "коллектив (Minerals Engineering, 2012)",
+    "year": "2012",
+    "venue": "Minerals Engineering, 2012, pii S0892687512000787",
+    "language": "English",
+    "link": "https://www.sciencedirect.com/science/article/abs/pii/S0892687512000787",
+    "scientific_insight": "При pH≈9 (рабочий для Ni-флотации) тальк и серпентин заряжены противоположно и притягиваются электростатически: шламовые покрытия серпентина осаждаются на тальке и на сульфидах, изменяя поверхностные свойства, реологию/вязкость пульпы и мешая как флотации сульфидов, так и депрессии талька. Серпентин (гидрофильный) и тальк (гидрофобный) совместно ухудшают селективность.",
+    "relevance": "Уточняет минералогический механизм оталькованной/труднообогатимой руды: не только сам тальк, но и связка тальк+серпентин через ошламование и рост вязкости пульпы депрессируют Ni. Роль серпентина/талька как маркеров обогатимости на оптике."
+   },
+   {
+    "title_original": "Технология комплексной переработки бедных никелевых руд",
+    "title_translation": "Technology for integrated processing of low-grade nickel ores",
+    "authors": "коллектив (КиберЛенинка)",
+    "year": "н/д",
+    "venue": "научная статья, размещена в КиберЛенинке (CyberLeninka)",
+    "language": "Russian",
+    "link": "https://cyberleninka.ru/article/n/tehnologiya-kompleksnoy-pererabotki-bednyh-nikelevyh-rud",
+    "scientific_insight": "Русскоязычный источник по переработке бедных/комплексных Ni-руд: тонкая вкрапленность и сложные срастания пентландита с пирротином и магнетитом затрудняют раскрытие мономинеральных зёрен при измельчении, что снижает селективность обогащения; обсуждаются комбинированные схемы (магнитная сепарация + флотация) под тонко-сросшиеся руды.",
+    "relevance": "Native-язычное подтверждение механизма труднообогатимого класса (тонкая эмульсионная вкрапленность → плохое раскрытие) в отечественной терминологии, релевантной норильской сырьевой базе."
+   }
+  ],
+  "key_insights": [
+   "ЦЕНТРАЛЬНАЯ НАУЧНАЯ ОПОРА постановки задачи: в геометаллургии установлено, что руды одинакового ХИМСОСТАВА дают разный технологический отклик ИСКЛЮЧИТЕЛЬНО из-за текстуры (Lund, Lamberg & Lindberg 2015). Отсюда концепция 'текстурного архетипа' — конечного набора текстурных классов, каждый с характерным раскрытием и извлечением. Наши 3 класса (рядовая/труднообогатимая/оталькованная) — это и есть текстурные архетипы; постановка научно легитимна, а не эвристична.",
+   "ЦЕПОЧКА ТЕКСТУРА→ОБОГАТИМОСТЬ формализована и эмпирически подтверждена: текстура → размер/тип срастаний сульфидов → требуемая крупность помола для раскрытия → извлечение (recovery) и качество (grade). Для системы пентландит/пирротин/халькопирит это прямо показано на Nkomati: раскрытие пентландита коррелирует с помолом, а оптимальный помол зависит от текстурного типа. Это физическая основа различия рядовая vs труднообогатимая.",
+   "ТРУДНООБОГАТИМАЯ = проблема РАСКРЫТИЯ (liberation): тонкие/эмульсионные срастания и замещение сульфидов фундаментально ограничивают достижимое раскрытие; при стандартном помоле сульфиды остаются запертыми в сростках, требуют переизмельчения (потери в шламах, рост энергозатрат). Эмульсионная вкрапленность пентландита в пирротине — классический продукт распада MSS-твёрдого раствора, объясняющий 'плохо раскрываются при измельчении'.",
+   "ОТАЛЬКОВАННАЯ = проблема АССОЦИАЦИИ/поверхности, а не раскрытия: тальк природно гидрофобен и флотируется практически одним вспенивателем (извлечение >90%), поэтому идёт в концентрат, разубоживает его MgO и через слизистые покрытия/реологию пульпы (особенно в связке с серпентином при pH≈9) депрессирует извлечение Ni. Поэтому доля талька на аншлифе — самостоятельный решающий признак класса, действующий по иному механизму, чем срастания сульфидов.",
+   "КОЛИЧЕСТВЕННЫЕ ТЕКСТУРНЫЕ ПРИЗНАКИ для нашей оптики уже отработаны: Association Indicator Matrix (AIM) и LBP (Lund/Lamberg) для ассоциации/смежности фаз; GLCM-признаки + PCA + кластеризация (µ-XRF/ML работы 2025) для текстурных классов, коррелирующих с твёрдостью/дробимостью; семь индексов контакта фаз (Ueda et al. 2017) с предупреждением о стереологическом смещении 2D-сечения. Всё это вычислимо из панорамных reflected-light аншлифов.",
+   "ОПТИЧЕСКИЙ (reflected-light) АВТОМАТИЧЕСКИЙ АНАЛИЗ научно состоятелен и прямо доступен: Pérez-Barnuevo/Pirard/Castroviejo автоматизировали классификацию срастаний по оптической микроскопии; а российская работа Korshunov et al. (2025, Mining Science and Technology) даёт CNN-сегментацию РОВНО норильской минеральной ассоциации (пирротин/пентландит/халькопирит/магнетит) в отражённом свете с IoU 0.88, открытым датасетом LumenStone и библиотекой petroscope — готовый переносимый baseline и работа с панорамами/PPL+XPL.",
+   "ПРЕДОСТЕРЕЖЕНИЯ ИЗ ЛИТЕРАТУРЫ для нашей модели: (1) стереологический сдвиг — 2D-аншлиф занижает истинное 3D-раскрытие, поэтому 'запертость' сульфидов по плоскому срезу надо интерпретировать осторожно (Ueda 2017); (2) неаддитивность обогатительных переменных — нельзя линейно суммировать вклад минералов в извлечение, ML-модели (деревья/ансамбли) предпочтительнее (обзор ML-геометаллургии 2025); (3) флотационный отклик — 'сложная функция минералогии И текстуры' (Nkomati), поэтому одних модальных долей минералов недостаточно, нужны именно текстурные/ассоциативные признаки.",
+   "МЕТОДОЛОГИЧЕСКИЙ ПРЕЦЕДЕНТ 'классифицировать по изображению → предсказать процесс' прямо установлен: Koch et al. (2019) относят новый образец к текстурной группе керна и по ней прогнозируют обогащение; 'rapid estimation of processing behaviour based on ore texture' (2021) делает это с сокращением физических тестов, показывая связь гетерогенная текстура→твёрже/труднее. Это ровно наша схема прогноза обогатимости по оптике, подкреплённая рецензируемой наукой."
+  ]
+ },
+ {
+  "angle": "Non-English scientific literature (Portuguese/Brazil, Spanish, French, German, Russian) on automated/quantitative ore microscopy in reflected light, PLUS fresh 2023-2026 deep-learning SOTA for mineral segmentation, modal-composition and processability/floatability estimation from images — anchored to Cu-Ni sulfides (pyrrhotite/pentlandite/chalcopyrite/magnetite), talc depression, and fine (emulsion) intergrowths that define the three processability classes.",
+  "papers": [
+   {
+    "title_original": "Caractérisation minéralogique quantitative automatisée en microscopie optique et applications à l'étude de minerais dans le cadre d'une approche géométallurgique",
+    "title_translation": "Automated quantitative mineralogical characterization by optical microscopy and applications to ore study in a geometallurgical approach",
+    "authors": "Benjamin De Castro (dir. thesis, UQAT / Polytechnique Montréal)",
+    "year": "2023",
+    "venue": "PhD dissertation, Université du Québec en Abitibi-Témiscamingue / Polytechnique Montréal",
+    "language": "French",
+    "link": "https://depositum.uqat.ca/id/eprint/1484/",
+    "scientific_insight": "Develops 'automated optical microscopy' (MOA) as an affordable QEMSCAN/MLA alternative built on three axes: polished-section prep protocols (Gy sampling theory), imaging improvements, and validation. Two innovations directly relevant here: (1) a DEEP-LEARNING classifier that detects TRANSPARENT gangue minerals in reflected light on acrylic mounts (where gangue reflectance overlaps the resin), and (2) HYPERSPECTRAL reflected-light imaging that separates opaque sulfides better than classic multispectral RGB. Classifies chalcopyrite, pyrrhotite, PENTLANDITE, pyrite, sphalerite, galena, arsenopyrite; derives modal mineralogy and liberation/exposure from automated particle-phase maps.",
+    "relevance": "The closest methodological match to our task: reflected-light optical (not SEM) quantification of exactly our Cu-Ni sulfide assemblage, validated on the Dumont NICKEL project for domain classification and Ni-distribution quantification. Shows that DL + hyperspectral optics can substitute for SEM in Ni-sulfide process mineralogy — the technical backbone for classifying our aншлифы by modal sulfide content and liberation."
+   },
+   {
+    "title_original": "From visual diagnostics to deep learning: automatic mineral identification in polished section images / От визуальной диагностики к глубокому обучению: автоматическая идентификация минералов на изображениях аншлифов",
+    "title_translation": "From visual diagnostics to deep learning: automatic mineral identification in polished section images",
+    "authors": "Korshunov D.M., Khvostikov A.V., Nikolaev G.V., Sorokin D.V., Indychko O.I., Boguslavskii M.A., Krylov A.S.",
+    "year": "2025",
+    "venue": "Mining Science and Technology (Russia) / Горные науки и технологии, Vol. 10, No. 3; DOI 10.17073/2500-0632-2025-05-416",
+    "language": "Russian / English",
+    "link": "https://mst.misis.ru/jour/article/view/974",
+    "scientific_insight": "Semantic segmentation of REFLECTED-LIGHT polished-section (аншлиф) images for 9 ore phases including chalcopyrite, pyrrhotite, PENTLANDITE, pyrite, bornite, arsenopyrite, tennantite, covellite, galena, sphalerite and magnetite. Uses the open LumenStone dataset (158 annotated аншлиф images, S1/S2/S3 subsets) and evaluates PSPNet (ResNet18 encoder), ResUNet and UPerNet; adds cross-polarized (XPL) channels to resolve anisotropic minerals and custom sampling to fight severe class imbalance. Reaches mean IoU 0.88, pixel accuracy 0.96 (per-mineral IoU 0.65-0.96).",
+    "relevance": "State-of-the-art (2025) and native-Russian — segments precisely the Norilsk sulfide mineralogy on polished sections in reflected light. Directly usable prior art for pixel-level modal quantification of pyrrhotite/pentlandite/chalcopyrite/magnetite that underpins our processability classing; LumenStone is a candidate pretraining dataset. Also documents the class-imbalance and low-IoU-for-rare-phases problems we will face."
+   },
+   {
+    "title_original": "Automated characterisation of intergrowth textures in mineral particles. A case study",
+    "title_translation": "(same)",
+    "authors": "Pérez-Barnuevo L., Pirard E., Castroviejo R. (UPM Madrid + Univ. Liège)",
+    "year": "2013",
+    "venue": "Minerals Engineering 52:136-142; DOI 10.1016/j.mineng.2013.05.001",
+    "language": "English (Spanish/Belgian group)",
+    "link": "https://oa.upm.es/26163/1/INVE_MEM_2013_162885.pdf",
+    "scientific_insight": "Introduces a 'Textural Descriptors Methodology' that computes a set of morphological/spatial indices on individual mineral PARTICLES (from MLA / reflected-light images) and, via discriminant analysis, automatically classifies the intergrowth TYPE: simple (binary, coarse) vs complex/multiphase vs EMULSION-type (fine dispersed inclusions of one phase in another). Applied to >500 unliberated chalcopyrite-bearing particles. Establishes quantitatively that liberation behaviour is governed by intergrowth type, not just phase proportion.",
+    "relevance": "Provides the exact vocabulary and quantitative descriptors separating our 'рядовая' (simple coarse intergrowths, easy liberation) from 'труднообогатимая' (fine/EMULSION intergrowths that will not liberate on grinding). A concrete feature-engineering recipe for turning texture into a processability label."
+   },
+   {
+    "title_original": "Upgrading of talc-bearing copper-nickel sulfide ore by froth flotation using sodium phytate as depressant",
+    "title_translation": "(same)",
+    "authors": "(Colloids and Surfaces A authors)",
+    "year": "2024",
+    "venue": "Colloids and Surfaces A: Physicochemical and Engineering Aspects, Vol. 687, Art. 133561; DOI 10.1016/j.colsurfa.2024.133561",
+    "language": "English",
+    "link": "https://www.sciencedirect.com/science/article/abs/pii/S0927775724004229",
+    "scientific_insight": "Quantifies WHY talc harms Cu-Ni sulfide beneficiation: talc is naturally hydrophobic/floatable and reports to concentrate, diluting grade and consuming reagents. Feed of 0.35% Cu, 0.68% Ni, 24.57% MgO. Sodium phytate selectively depresses talc (talc recovery cut to 13.5-17%) with only minor effect on chalcopyrite/pentlandite; contact-angle/FTIR/XPS show it strongly increases talc hydrophilicity. Result: concentrate 2.66% Cu (79.7%), 5.38% Ni (83.0%), MgO down to 6.39%.",
+    "relevance": "Direct mineralogical-metallurgical justification for our 'оталькованная' class: it establishes the >~10% talc threshold logic — natural floatability of talc depresses Ni recovery and forces special depressant regimes. Confirms that detecting/quantifying talc (a bright, low-relief silicate in reflected light) is a decisive, class-defining feature."
+   },
+   {
+    "title_original": "Avaliação da liberação mineral por análise de imagens digitais obtidas em microscópio ótico de luz refletida",
+    "title_translation": "Evaluation of mineral liberation by digital image analysis obtained with a reflected-light optical microscope",
+    "authors": "Edgar Rodo Mantilla (adv. Roberto Galery)",
+    "year": "2013",
+    "venue": "MSc dissertation, Universidade Federal de Minas Gerais (UFMG)",
+    "language": "Portuguese",
+    "link": "https://repositorio.ufmg.br/items/2937a41d-7eec-4950-a249-c26fb730f286",
+    "scientific_insight": "Builds an automated reflected-light optical image-analysis routine (AxioVision) to measure quartz LIBERATION degree in Samarco iron ore, replacing the manual Gaudin method. Documented gains: 82% reduction in mean absolute error, 21% lower variability, analysis time cut 77% (14m26s→3m19s), and elimination of the 26.1% variability caused by human operators — provided image-acquisition conditions are standardized.",
+    "relevance": "Portuguese-language proof that liberation can be quantified reproducibly from REFLECTED-LIGHT optical images (not SEM). The methodology (controlled acquisition + automated phase segmentation → liberation index) transfers directly to quantifying sulfide liberation/раскрытие that separates our рядовая vs труднообогатимая classes, and warns that acquisition standardization is prerequisite."
+   },
+   {
+    "title_original": "Deep learning semantic segmentation of opaque and non-opaque minerals from epoxy resin in reflected light microscopy images",
+    "title_translation": "(same)",
+    "authors": "Filippo M.P., Gomes O.F.M., da Costa G.A.O.P., Mota G.L.A. (CETEM / PUC-Rio / UERJ, Brazil)",
+    "year": "2021",
+    "venue": "Minerals Engineering, Vol. 170, Art. 107007; DOI 10.1016/j.mineng.2021.107007",
+    "language": "English (Brazilian group, PUC-Rio/CETEM)",
+    "link": "https://ouci.dntb.gov.ua/en/works/9ZegMDal/",
+    "scientific_insight": "Applies DeepLab-family CNN semantic segmentation to REFLECTED-LIGHT microscopy of particles in epoxy, solving the hard case where NON-opaque (transparent) minerals such as quartz have reflectance close to the epoxy background and to each other — the classic failure mode of thresholding. Shows CNNs disambiguate opaque sulfides/oxides from resin and translucent gangue where grey-level segmentation fails.",
+    "relevance": "The Brazilian (PUC-Rio) reflected-light DL segmentation lineage most similar to our imaging modality. The opaque-vs-nonopaque reflectance-overlap problem is exactly what we face distinguishing bright sulfides/magnetite from dark talc/serpentine/altered (sulfur-replaced) phases; validates DL over classical thresholding for our aншлифы."
+   },
+   {
+    "title_original": "Fine-grained mineral recognition and segmentation in metal mineral optical images based on improved YOLOv8n model",
+    "title_translation": "(same)",
+    "authors": "(Minerals Engineering 2025 authors)",
+    "year": "2025",
+    "venue": "Minerals Engineering (2025), Art. S0892687525001189; DOI 10.1016/j.mineng.2025.109XXX",
+    "language": "English",
+    "link": "https://www.sciencedirect.com/science/article/abs/pii/S0892687525001189",
+    "scientific_insight": "Improves YOLOv8n for FINE-GRAINED, SMALL-TARGET mineral recognition/segmentation in reflected-light metal-mineral optical images: adds a dedicated small-target detection layer, replaces C2f with C2f_ScConv, and inserts a ContextAggregation module in the neck. Reports mAP50 +41.4% vs Mask R-CNN and +5.5% vs baseline YOLOv8n while reducing compute.",
+    "relevance": "Fresh (2025) SOTA aimed precisely at tiny mineral targets — the emulsion/flame-like fine intergrowths (эмульсионная вкрапленность) that mark our труднообогатимая class and that generic segmenters miss. A practical architecture template for detecting sub-grain sulfide inclusions in our panoramas."
+   },
+   {
+    "title_original": "Floatability prediction of copper ore using particle complexity and textural features",
+    "title_translation": "(same)",
+    "authors": "Chamlal, Benzaazoua et al.",
+    "year": "2025",
+    "venue": "Minerals Engineering, Vol. 230, Art. 109406; ADS 2025MiEng.23009406C",
+    "language": "English",
+    "link": "https://www.sciencedirect.com/science/article/abs/pii/S0892687525002341",
+    "scientific_insight": "Defines a 2D 'textural complexity index' capturing phase interactions, exposure and phase distribution within particles, arguing that weight-based liberation classes fail to capture real texture. On feed/concentrate/tailings plant samples it explains that ~17% of LOCKED particles still recovered owe their recovery to textural complexity, and the index predicts the grade-recovery curve with essentially no deviation from measured results.",
+    "relevance": "Demonstrates end-to-end that a quantitative TEXTURE feature predicts FLOATABILITY/grade-recovery — the conceptual proof that our three processability classes are learnable from image texture, and that exposure/complexity (not just modal %) is the right target variable."
+   },
+   {
+    "title_original": "Influence of mineralogy and ore texture on pentlandite flotation at the Nkomati nickel mine, South Africa",
+    "title_translation": "(same)",
+    "authors": "(Minerals Engineering; authorship to verify — references Becker et al. 2010)",
+    "year": "2014",
+    "venue": "Minerals Engineering (2014); Art. S0892687513001143",
+    "language": "English",
+    "link": "https://www.sciencedirect.com/science/article/abs/pii/S0892687513001143",
+    "scientific_insight": "Across 29 samples (flotation tests + assay + MLA), flotation response is shown to be a COMPLEX function of ore mineralogy AND texture. Ordinary floatability order is chalcopyrite → pentlandite → pyrrhotite; but where the pyrrhotite:pentlandite ratio is high, pyrrhotite floats earlier than expected, reports throughout, and DEPRESSES and EXTENDS pentlandite flotation — i.e. the same modal grade can give very different recovery depending on sulfide association/texture.",
+    "relevance": "Empirical mineralogical basis for our рядовая vs труднообогатимая split in the SAME Cu-Ni-Fe sulfide system: pentlandite grain size, its association with pyrrhotite, and fine textures control recovery. Justifies encoding sulfide-sulfide association (not just abundance) as a processability feature."
+   },
+   {
+    "title_original": "Innovación en las técnicas de microscopía óptica aplicadas a la industria",
+    "title_translation": "Innovation in optical microscopy techniques applied to industry",
+    "authors": "Pérez-Barnuevo L., Castroviejo R., Berrezueta E. et al. (UPM Madrid)",
+    "year": "2010",
+    "venue": "Conference/technical publication, Univ. Politécnica de Madrid (open access oa.upm.es/11069)",
+    "language": "Spanish",
+    "link": "https://oa.upm.es/11069/1/Perez_Barnuevo_et_al_2010_.pdf",
+    "scientific_insight": "Spanish-language account of automation trends in reflected-light ore microscopy (microscopía de menas): multispectral/digital reflected-light image analysis multiplies throughput and precision for automated identification and quantification of common sulfides (arsenopyrite, chalcopyrite, galena, pyrite, pyrrhotite, sphalerite), plus modal mineralogy, liberation and mineral associations for process mineralogy.",
+    "relevance": "Native-Spanish foundation of the automated reflected-light 'menas' school (UPM/Castroviejo) that our pipeline continues; frames the reflectance-based multispectral discrimination of exactly our sulfide phases and the liberation/association outputs needed for processability classing."
+   },
+   {
+    "title_original": "A method for rapid estimation of processing behaviour based on ore texture",
+    "title_translation": "(same)",
+    "authors": "(Minerals Engineering 2021; ADS 2021MiEng.17107111N)",
+    "year": "2021",
+    "venue": "Minerals Engineering, Vol. 171, Art. 107111",
+    "language": "English",
+    "link": "https://www.sciencedirect.com/science/article/abs/pii/S089268752100340X",
+    "scientific_insight": "A full pipeline that predicts PROCESSING behaviour from ore TEXTURE: hyperspectral/high-res core images → texture-spectrum + cluster analysis to define textural classes and pixel-classified mineral maps → models linking texture heterogeneity to liberation and to the comminution parameter A*b, extrapolated across a porphyry-Cu drill-core set from a small measured subset. Reduces physical test work by inferring processability from imaging.",
+    "relevance": "The clearest published template for OUR problem statement — group ore into TEXTURAL CLASSES and predict how it will process (liberation/comminution) directly from images. Validates the whole premise of image-based processability classification and offers the texture-spectrum + clustering feature approach."
+   },
+   {
+    "title_original": "Method development in automated mineralogy",
+    "title_translation": "(same)",
+    "authors": "Dirk Sandmann",
+    "year": "2015",
+    "venue": "PhD dissertation, TU Bergakademie Freiberg (Qucosa: qucosa:23008)",
+    "language": "English (TU Bergakademie Freiberg, Germany)",
+    "link": "https://tubaf.qucosa.de/id/qucosa:23008",
+    "scientific_insight": "Freiberg-school reference on MLA (SEM-EDS automated mineralogy): how to quantify modal mineralogy, mineral LIBERATION and ASSOCIATION, grain-size distributions and particle morphology as statistically robust, unbiased parameters, and to derive grade-recovery curves — validated against XRD, laser diffraction and manual methods across mica, graphite and PGE case studies.",
+    "relevance": "German (Freiberg) methodological gold-standard defining the liberation/association/modal metrics that our optical pipeline must reproduce (more cheaply). Also frames MLA as the ground-truth technique against which optical/DL modal estimates of our sulfides should be benchmarked."
+   },
+   {
+    "title_original": "Segmentation and Labeling of Polished Section Images Based on Deep Learning",
+    "title_translation": "(same)",
+    "authors": "(Mining, Metallurgy & Exploration 2025 authors)",
+    "year": "2025",
+    "venue": "Mining, Metallurgy & Exploration; DOI 10.1007/s42461-025-01205-4",
+    "language": "English",
+    "link": "https://link.springer.com/article/10.1007/s42461-025-01205-4",
+    "scientific_insight": "Uses Mask R-CNN to segment and LABEL minerals in polished-section (аншлиф) photometric images in seconds at 89.25% accuracy, and argues optical-microscope process mineralogy is markedly cheaper than SEM/XRD for modal composition. Highlights annotation-cost bottlenecks and interactive/superpixel labeling to build training sets.",
+    "relevance": "2025 SOTA squarely on polished-section (our exact sample type) DL segmentation for modal composition; the annotation-efficiency techniques address our weak/partial (blue-line) labeling situation."
+   },
+   {
+    "title_original": "Res-UNet Ensemble Learning for Semantic Segmentation of Mineral Optical Microscopy Images",
+    "title_translation": "(same)",
+    "authors": "(Minerals, MDPI 2024 authors)",
+    "year": "2024",
+    "venue": "Minerals (MDPI), 14(12):1281; DOI 10.3390/min14121281",
+    "language": "English",
+    "link": "https://www.mdpi.com/2075-163X/14/12/1281",
+    "scientific_insight": "Ensemble of Res-UNet models for semantic segmentation of mineral OPTICAL microscopy images, targeting robustness and boundary accuracy on optically-acquired mineral phases where single encoders struggle with subtle reflectance/texture differences.",
+    "relevance": "Recent (2024) optical-microscopy segmentation architecture directly transferable to our reflected-light panoramas; ensembling is a practical route to stabilize phase boundaries between visually similar sulfides and between sulfide and altered/talc matrix."
+   },
+   {
+    "title_original": "Reflected Light Microscopic Iron ore image dataset for iron ore characterization",
+    "title_translation": "(same)",
+    "authors": "Firdaus et al.",
+    "year": "2025",
+    "venue": "Data in Brief, Vol. 60, Art. 111540; companion model in a deep hybrid inception network paper",
+    "language": "English",
+    "link": "https://www.sciencedirect.com/science/article/pii/S2352340925002720",
+    "scientific_insight": "Publishes a REFLECTED-LIGHT microscopy image dataset of iron ores at two magnifications and uses a directed-acyclic-graph hybrid-Inception CNN (with entropy-based attention) to automatically GRADE ores into four classes (Blue Dust, Hard Laminated, Lateritic, Soft Laminated) directly from RLM images.",
+    "relevance": "A close analogue of our end goal: reflected-light images → discrete ORE-GRADE/technological CLASS via a single CNN. Demonstrates feasibility of image-only multi-class ore-type classification (as opposed to per-pixel modal) — a candidate architecture for our 3-class output."
+   },
+   {
+    "title_original": "Deep learning in image segmentation for mineral production: A review",
+    "title_translation": "(same)",
+    "authors": "(Computers & Geosciences 2023 authors)",
+    "year": "2023",
+    "venue": "Computers & Geosciences, Vol. 180, Art. 105455; DOI 10.1016/j.cageo.2023.105455",
+    "language": "English",
+    "link": "https://ui.adsabs.harvard.edu/abs/2023CG....18005455L/abstract",
+    "scientific_insight": "Systematic review of DL image segmentation for mineral production: encoder-decoder building blocks, representative networks, available mineral image datasets, performance metrics and SOTA, with explicit guidance on choosing architecture/encoder by mineral type, image type/resolution and data quantity.",
+    "relevance": "A 2023 map of the SOTA and datasets to justify architecture choices and benchmark selection for our reflected-light sulfide segmentation, and to position our optical, weakly-labeled, panoramic setting within the field."
+   },
+   {
+    "title_original": "Talc–serpentine interactions and implications for talc depression",
+    "title_translation": "(same)",
+    "authors": "(Minerals Engineering 2012 authors)",
+    "year": "2012",
+    "venue": "Minerals Engineering (2012); Art. S0892687512000787",
+    "language": "English",
+    "link": "https://www.sciencedirect.com/science/article/abs/pii/S0892687512000787",
+    "scientific_insight": "Distinguishes the two Mg-silicate gangues that plague Ni-sulfide flotation: TALC is naturally hydrophobic and floatable (must be depressed), whereas SERPENTINE is hydrophilic with poor natural floatability but causes slime-coating/entrainment and high pulp viscosity; their surface interactions modulate how effectively talc can be depressed.",
+    "relevance": "Clarifies the mineralogical distinction our 'оталькованная' class hinges on (talc vs serpentine) — important because in reflected light both are low-reflectance silicates, but only talc's natural floatability makes an ore hard to concentrate. Motivates separating talc from serpentine in our phase segmentation, not lumping all silicate gangue."
+   }
+  ],
+  "key_insights": [
+   "The single strongest methodological match to our task is French/Québec: De Castro (2023, UQAT/Polytechnique) builds automated OPTICAL-microscopy (reflected-light) quantification of exactly our Cu-Ni sulfide assemblage (chalcopyrite/pyrrhotite/PENTLANDITE + others), using DEEP LEARNING for transparent-gangue detection and HYPERSPECTRAL optics for opaque sulfides, and validates it on the Dumont NICKEL project as a QEMSCAN substitute.",
+   "Russian SOTA is a direct fit: Korshunov et al. (2025, Mining Science & Technology, LumenStone dataset of 158 аншлиф images) segment pyrrhotite/pentlandite/chalcopyrite/magnetite in reflected-light polished sections with PSPNet/ResUNet/UPerNet at IoU 0.88 — a ready pretraining dataset and architecture baseline for our exact modality and mineralogy.",
+   "The three classes map cleanly onto quantifiable TEXTURE, not just modal %: Pérez-Barnuevo/Pirard/Castroviejo (2013) give discriminant descriptors that separate simple/coarse intergrowths (→ рядовая) from EMULSION-type fine intergrowths (→ труднообогатимая), and 2025 floatability-prediction work (Chamlal/Benzaazoua) proves a 2D textural-complexity index predicts the grade-recovery curve, explaining recovery of locked particles.",
+   "The 'оталькованная' class has explicit mineralogical-metallurgical grounding: talc is naturally hydrophobic/floatable and depresses Ni recovery (sodium-phytate 2024 study: 24.6%→6.4% MgO once talc is depressed), and talc must be distinguished from hydrophilic serpentine (2012) — so our segmentation should separate talc from other Mg-silicate gangue, not lump them.",
+   "For the рядовая vs труднообогатимая distinction in the SAME Cu-Ni-Fe sulfide system, the Nkomati study shows recovery is a complex function of sulfide ASSOCIATION and texture (high pyrrhotite:pentlandite ratio makes pyrrhotite depress/extend pentlandite flotation) and that pentlandite occurs as 8-38 µm exsolution/flame phases in pyrrhotite that cannot be economically liberated by fine grinding — the physical basis of 'poorly liberating' ore.",
+   "There is a directly analogous published pipeline for our end goal — 'rapid estimation of PROCESSING BEHAVIOUR from ore TEXTURE' (Minerals Engineering 2021): texture-spectrum + clustering → textural classes → predicted liberation and comminution (A*b) from images, confirming image-based processability classification is a validated paradigm.",
+   "2023-2026 DL toolkit for our imaging problem is maturing fast: improved-YOLOv8n (2025) for FINE/small-target minerals (emulsion inclusions), Res-UNet ensembles (2024), Mask R-CNN polished-section labeling in seconds (2025), reflected-light iron-ore GRADING into 4 classes via a hybrid-Inception CNN (2025), and a Computers & Geosciences (2023) review to guide architecture/dataset choice; the recurring bottleneck cited is annotation cost, argued for via interactive/superpixel labeling — relevant to our weak blue-line labels.",
+   "Brazilian (PUC-Rio/CETEM) and German (Freiberg) schools bracket the ground truth: Filippo/Gomes/Mota (2021) show DL (DeepLab) beats grey-level thresholding for opaque-vs-non-opaque reflected-light segmentation (the reflectance-overlap problem we face with bright sulfides vs dark talc/altered matrix), while Sandmann's Freiberg MLA thesis (2015) defines the liberation/association/modal metrics and grade-recovery outputs our cheaper optical pipeline should reproduce and be benchmarked against."
+  ]
+ }
+]
