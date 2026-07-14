@@ -1,3 +1,5 @@
+> **In English:** ShlifScan — an end-to-end system for automatic ore classification from reflected-light panoramas of polished sections (up to gigapixel). It segments mineral phases (sulphides, grey non-ore phase, talc, matrix), quantifies sulphide-intergrowth type and talc fraction, applies expert logic to assign a processing class, and serves results in a deep-zoom viewer with metrics and PDF/CSV/GeoJSON reports. Built for the Nornickel 2026 hackathon. *(Full description in Russian below.)*
+
 # ШЛИФ-Скан — автоматическая классификация руд по панорамам полированных шлифов
 
 Решение трека **«Скажи мне, кто твой шлиф»** (Норникель, 2026).
