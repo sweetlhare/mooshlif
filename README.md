@@ -1,173 +1,176 @@
-> **In English:** ShlifScan — an end-to-end system for automatic ore classification from reflected-light panoramas of polished sections (up to gigapixel). It segments mineral phases (sulphides, grey non-ore phase, talc, matrix), quantifies sulphide-intergrowth type and talc fraction, applies expert logic to assign a processing class, and serves results in a deep-zoom viewer with metrics and PDF/CSV/GeoJSON reports. Built for the Nornickel 2026 hackathon. *(Full description in Russian below.)*
+[🇷🇺 Русская версия](README.ru.md)
 
-# ШЛИФ-Скан — автоматическая классификация руд по панорамам полированных шлифов
+# ShlifScan — automatic ore classification from polished-section panoramas
 
-Решение трека **«Скажи мне, кто твой шлиф»** (Норникель, 2026).
+Solution for the **"Tell me who your section is"** track (Nornickel, 2026).
 
-End-to-end система: панорамное OM-изображение шлифа (до гигапикселя) →
-попиксельная сегментация фаз → количественные метрики → технологический
-класс руды с объяснением → интерактивный просмотр и отчёты.
+End-to-end system: a panoramic reflected-light (OM) image of a polished section
+(up to gigapixel) → per-pixel phase segmentation → quantitative metrics → an
+explained ore processing class → interactive viewing and reports.
 
-## Что делает система
+## What the system does
 
-1. **Сегментирует фазы** в отражённом свете: сульфиды, серая нерудная фаза
-   (магнетит и пр.), тальк, матрица. Работает на двух разных доменах съёмки
-   без ручной подстройки (адаптивная нормализация LAB per-image).
-2. **Классифицирует срастания сульфидов**: обычные (зелёный) vs тонкие
-   (красный) — по интерпретируемым морфологическим признакам (толщина
-   структур, фрагментированность, замещённость) + DINOv2-ансамбль.
-3. **Оценивает долю талька** (синий) обучаемой моделью (U-Net на слабой
-   разметке экспертных обводок) с изотонической калибровкой доли.
-4. **Применяет экспертную логику**: тальк > 10% → *оталькованная*; иначе
-   преобладание тонких срастаний → *труднообогатимая*, обычных → *рядовая*.
-5. **Формирует результат**: цветовая маска в deep-zoom вьюере, таблица
-   метрик, гранулометрия (P50/P80), текстовое заключение, PDF/CSV/GeoJSON.
+1. **Segments phases** in reflected light: sulphides, grey non-ore phase
+   (magnetite, etc.), talc, matrix. Works across two different imaging domains
+   with no manual tuning (per-image adaptive LAB normalization).
+2. **Classifies sulphide intergrowths**: coarse (green) vs fine (red) — from
+   interpretable morphological features (structure thickness, fragmentation,
+   replacement) + a DINOv2 ensemble.
+3. **Estimates the talc fraction** (blue) with a trained model (U-Net on weak
+   labels from expert outlines) with isotonic calibration of the fraction.
+4. **Applies expert logic**: talc > 10% → *talc-bearing*; otherwise a
+   predominance of fine intergrowths → *hard-to-process*, of coarse ones →
+   *ordinary*.
+5. **Produces the result**: a colour mask in a deep-zoom viewer, a metrics
+   table, granulometry (P50/P80), a text conclusion, PDF/CSV/GeoJSON.
 
-## Быстрый старт (локально)
+## Quick start (local)
 
 ```bash
 pip install -r requirements.txt
 pip install fastapi "uvicorn[standard]" python-multipart segmentation-models-pytorch pyvips joblib
 
-# CLI: анализ одного снимка или панорамы
+# CLI: analyze a single image or panorama
 python -m shlifscan.cli analyze "data/Панорамы/4.jpg" -o reports/pano4
 
-# CLI: пакетная обработка директории
+# CLI: batch-process a directory
 python -m shlifscan.cli batch "data/Фото руд по сортам. ч2/рядовые" -o reports/batch
 
-# Веб-приложение (бэкенд + собранный фронтенд)
+# Web application (backend + prebuilt frontend)
 uvicorn app.backend.main:app --port 8000
 # → http://localhost:8000
 ```
 
-**Веса моделей.** Лёгкие sklearn-модели (`models/*.pkl`) и калибровки лежат
-в репозитории. Тяжёлые torch-веса U-Net талька (`models/talc_unet.pt`, ~98 МБ) в git
-не версионируются — их можно скачать из
+**Model weights.** Lightweight sklearn models (`models/*.pkl`) and calibrations
+are kept in the repository. The heavy torch weights for the talc U-Net
+(`models/talc_unet.pt`, ~98 MB) are not versioned in git — download them from
 [GitHub Release v1.0](https://github.com/sweetlhare/mooshlif/releases/tag/v1.0)
-(или из архива решения на облачном диске) и положить в `models/`, либо
-обучить заново (`scripts/train_talc.py`). Без `.pt` система работает на классическом
-фолбэке детекции талька (`shlifscan/talc.py`, `_predict_classic`) — класс
-руды остаётся корректным, точность доли талька ниже.
+(or from the solution archive on cloud storage) and place them in `models/`, or
+retrain (`scripts/train_talc.py`). Without the `.pt`, the system runs on a
+classic talc-detection fallback (`shlifscan/talc.py`, `_predict_classic`) — the
+ore class stays correct, only the talc-fraction accuracy is lower.
 
-**Фронтенд.** Собранный SPA (`app/frontend/dist/`) включён в репозиторий —
-`uvicorn` отдаёт его сразу. Для пересборки: `cd app/frontend && npm ci &&
-npm run build`. В Docker-образе фронт собирается автоматически (multi-stage).
+**Frontend.** The prebuilt SPA (`app/frontend/dist/`) is included in the
+repository — `uvicorn` serves it directly. To rebuild: `cd app/frontend && npm
+ci && npm run build`. In the Docker image the frontend is built automatically
+(multi-stage).
 
 ## Docker (on-prem)
 
 ```bash
-docker compose up --build          # CPU-профиль
+docker compose up --build          # CPU profile
 docker compose -f docker-compose.yml -f docker-compose.gpu.yml up --build  # CUDA
 ```
 
-Артефакты анализов и модели монтируются volume-ами (`runs/`, `models/`) —
-данные не покидают контур заказчика.
+Analysis artifacts and models are mounted as volumes (`runs/`, `models/`) — the
+data never leaves the customer's perimeter.
 
-## Архитектура
+## Architecture
 
 ```
-изображение (TIFF/PNG/JPEG/BMP, до 27000×21000)
-   │  тайлинг 4096² с перекрытием, глобальные константы нормализации
+image (TIFF/PNG/JPEG/BMP, up to 27000×21000)
+   │  4096² tiling with overlap, global normalization constants
    ▼
-[1] Предобработка: LAB, percentile-stretch L, db = b − b_ref(матрицы)
-[2] Сегментация фаз: адаптивные правила (Otsu по db среди ярких пикселей)
-[3] Срастания: агрегаты сульфидов → морфологические признаки →
-    калиброванный GBM (+ DINOv2 late fusion) → обычные/тонкие
-[4] Тальк: U-Net (resnet34, обучена на слабой разметке синих обводок
-    с pCE+GCE+GatedCRF) → вероятности → калиброванная доля
-[5] Экспертная логика + объяснение → класс руды
+[1] Preprocessing: LAB, percentile-stretch L, db = b − b_ref(matrix)
+[2] Phase segmentation: adaptive rules (Otsu on db among bright pixels)
+[3] Intergrowths: sulphide aggregates → morphological features →
+    calibrated GBM (+ DINOv2 late fusion) → coarse/fine
+[4] Talc: U-Net (resnet34, trained on weak labels from blue outlines
+    with pCE+GCE+GatedCRF) → probabilities → calibrated fraction
+[5] Expert logic + explanation → ore class
    ▼
-DZI-пирамиды (pyvips) · PDF · CSV · GeoJSON · REST API · SSE-прогресс
+DZI pyramids (pyvips) · PDF · CSV · GeoJSON · REST API · SSE progress
 ```
 
-**Стек**: Python 3.10+, PyTorch (MPS/CUDA/CPU), OpenCV, scikit-image,
+**Stack**: Python 3.10+, PyTorch (MPS/CUDA/CPU), OpenCV, scikit-image,
 scikit-learn, segmentation-models-pytorch, FastAPI, pyvips, React 18 +
 OpenSeadragon (deep zoom).
 
-## Качество (валидация на данных конкурса)
+## Quality (validation on the competition data)
 
-| Метрика | Значение | Протокол |
+| Metric | Value | Protocol |
 |---|---|---|
-| Срастания (рядовая vs труднообогатимая) | **macro-F1 0.915 ± 0.010** | 985 снимков, group-split 70/30 ×5, без утечек (дедупликация по MD5) |
-| — только морфология (без DINOv2) | macro-F1 0.892 | тот же протокол |
-| **Полная 3-классовая задача (гейт согласия талька)** | **macro-F1 0.939 ± 0.012** | 5-fold GroupKFold по образцам (аншлиф+MD5), 95% ДИ [0.924, 0.954]; ветка «тальк > 10%» требует подтверждения image-level голосом |
-| — та же задача до гейта (baseline) | macro-F1 0.905 | тот же протокол; гейт даёт +0.034, оталькованная precision 0.73→0.87, ложные срабатывания 46→19 |
-| Полная 3-классовая задача, ранняя оценка обобщения | macro-F1 0.888 ± 0.021 | 1100 снимков, group-split CV, пороги подбираются на train-фолде |
-| Согласованность развёрнутой системы с экспертом | acc **0.926** / macro-F1 0.905 | все 1180 снимков; рядовая F1 0.93, трудно 0.95, оталькованная 0.83 (recall 0.97) |
-| — бинарно (рядовая vs труднообогатимая) | acc 0.957 / F1 0.957 | 1051 снимок |
-| Кросс-домен ч2→ч1 / ч1→ч2 (срастания) | 0.941 / 0.877 | обучение на одном домене съёмки, тест на другом |
-| Тальк-vs-остальное по измеренной доле (ч1) | AUC 0.925 | 169 снимков ч1 |
-| Внешний тест: FeM (железная руда, Бразилия) | IoU 0.87 / F1 0.93 / precision 0.99 | zero-shot, 20 полей, Zenodo 5014700 |
-| Внешний тест: Cu ore (медная руда, Перу) | recall 0.988 / F1 0.86 (яркие рудные) | zero-shot, 22 поля, Zenodo 5020566 |
-| Скорость: снимок 2272×1704 | ~6 c (с DINOv2 и U-Net) | M2 Max (MPS) |
-| Скорость: панорама 14999×10391 (149 Мп) | 32 c через веб-API | цель ≤ 5 мин |
+| Intergrowths (ordinary vs hard-to-process) | **macro-F1 0.915 ± 0.010** | 985 images, group-split 70/30 ×5, no leakage (MD5 dedup) |
+| — morphology only (no DINOv2) | macro-F1 0.892 | same protocol |
+| **Full 3-class task (talc agreement gate)** | **macro-F1 0.939 ± 0.012** | 5-fold GroupKFold by sample (section + MD5), 95% CI [0.924, 0.954]; the "talc > 10%" branch requires confirmation by an image-level vote |
+| — same task before the gate (baseline) | macro-F1 0.905 | same protocol; the gate adds +0.034, talc-bearing precision 0.73→0.87, false positives 46→19 |
+| Full 3-class task, early generalization estimate | macro-F1 0.888 ± 0.021 | 1100 images, group-split CV, thresholds tuned on the train fold |
+| Agreement of the deployed system with the expert | acc **0.926** / macro-F1 0.905 | all 1180 images; ordinary F1 0.93, hard 0.95, talc-bearing 0.83 (recall 0.97) |
+| — binary (ordinary vs hard-to-process) | acc 0.957 / F1 0.957 | 1051 images |
+| Cross-domain part2→part1 / part1→part2 (intergrowths) | 0.941 / 0.877 | trained on one imaging domain, tested on the other |
+| Talc-vs-rest by measured fraction (part1) | AUC 0.925 | 169 part1 images |
+| External test: FeM (iron ore, Brazil) | IoU 0.87 / F1 0.93 / precision 0.99 | zero-shot, 20 fields, Zenodo 5014700 |
+| External test: Cu ore (copper ore, Peru) | recall 0.988 / F1 0.86 (bright ore) | zero-shot, 22 fields, Zenodo 5020566 |
+| Speed: 2272×1704 image | ~6 s (with DINOv2 and U-Net) | M2 Max (MPS) |
+| Speed: 14999×10391 panorama (149 MP) | 32 s via the web API | target ≤ 5 min |
 
-Оценка доли талька: U-Net (энкодер претренирован на LumenStone —
-аншлифы руд Норильской группы) на SAM-уточнённых экспертных обводках +
-изотоническая калибровка: val MAE 10.2 п.п. / IoU 0.47 **против слабой
-разметки** (часть расхождения — неразмеченный тальк вне обводок). В тёмном домене съёмки текстура талька физически теряется —
-класс руды в этом случае определяет image-level модель (talc-vote);
-доверительный интервал доли честно репортится в API/PDF.
+Talc-fraction estimation: a U-Net (encoder pretrained on LumenStone — polished
+sections of Norilsk-group ores) on SAM-refined expert outlines + isotonic
+calibration: val MAE 10.2 pp / IoU 0.47 **against the weak labels** (part of the
+discrepancy is unlabelled talc outside the outlines). In the dark imaging domain
+the talc texture is physically lost — in that case the ore class is determined
+by the image-level model (talc-vote); the fraction's confidence interval is
+honestly reported in the API/PDF.
 
-Замечание о данных: в выборке конкурса найдены 24 пары побайтово
-идентичных снимков с конфликтующими метками классов (~4% шума) — они
-исключены из обучения; это ограничивает достижимый потолок image-level
-метрик (~0.85 macro-F1 для 3 классов).
+A note on the data: the competition set contained 24 pairs of byte-identical
+images with conflicting class labels (~4% noise) — they were excluded from
+training; this caps the achievable ceiling of image-level metrics (~0.85
+macro-F1 for 3 classes).
 
-## Структура репозитория
+## Repository structure
 
 ```
-shlifscan/          # ядро: пайплайн анализа (пакет Python)
-  preprocess.py     #   нормализация, маски артефактов/шкалы
-  segment.py        #   сегментация фаз (домен-адаптивные правила)
-  intergrowth.py    #   признаки и классификация срастаний, гранулометрия
-  talc.py           #   детекция талька (U-Net + классический фолбэк)
-  classify.py       #   экспертная логика, ансамбль, заключение
-  pipeline.py       #   оркестрация, тайлинг панорам
-  report.py         #   PDF/CSV, лог воспроизводимости
-  cli.py            #   командная строка (analyze / batch)
+shlifscan/          # core: the analysis pipeline (Python package)
+  preprocess.py     #   normalization, artifact / scale-bar masks
+  segment.py        #   phase segmentation (domain-adaptive rules)
+  intergrowth.py    #   intergrowth features & classification, granulometry
+  talc.py           #   talc detection (U-Net + classic fallback)
+  classify.py       #   expert logic, ensemble, conclusion
+  pipeline.py       #   orchestration, panorama tiling
+  report.py         #   PDF/CSV, reproducibility log
+  cli.py            #   command line (analyze / batch)
 app/
-  backend/          # FastAPI: анализы, SSE, DZI-тайлы, экспорт
+  backend/          # FastAPI: analyses, SSE, DZI tiles, export
   frontend/         # React + OpenSeadragon SPA
-scripts/            # обучение и валидация
-  train_talc.py     #   U-Net талька на слабой разметке
-  validate_classification.py  # метрики на размеченных папках
-  extract_features.py         # признаки срастаний
-models/             # веса (torch .pt, sklearn .pkl) + манифесты
-docs/               # API-контракт, материалы
+scripts/            # training and validation
+  train_talc.py     #   talc U-Net on weak labels
+  validate_classification.py  # metrics on labelled folders
+  extract_features.py         # intergrowth features
+models/             # weights (torch .pt, sklearn .pkl) + manifests
+docs/               # API contract, materials
 ```
 
-## Метрологическая основа
+## Metrological basis
 
-Доли фаз — несмещённая оценка объёмного состава по принципу Delesse
-(Aᴀ = Vᵥ, 1848; русская школа — точечный метод Глаголева, 1933);
-автоматический анализ изображений в духе ASTM E1245. Доверительный интервал
-доли талька — двухкомпонентный: межпольная дисперсия по ASTM E562
-(t·s/√n_eff по сетке полей) ⊕ модельная погрешность калибровки; тест MSWD
-(Vermeesch 2018) флагует пространственную неоднородность талька.
-Российская рамка: ГОСТ Р ИСО 9042-2011; целевая категория НСОММИ/ВИМС —
-«количественный анализ» (Sвоспр < 30%).
+Phase fractions are an unbiased estimate of the volumetric composition by the
+Delesse principle (Aᴀ = Vᵥ, 1848; the Russian school — Glagolev's point method,
+1933); automated image analysis in the spirit of ASTM E1245. The talc-fraction
+confidence interval is two-component: between-field variance per ASTM E562
+(t·s/√n_eff over a grid of fields) ⊕ the model's calibration error; the MSWD
+test (Vermeesch 2018) flags spatial heterogeneity of talc. Russian framework:
+GOST R ISO 9042-2011; the target NSOMMI / VIMS category — "quantitative
+analysis" (S_repr < 30%).
 
-## Воспроизводимость
+## Reproducibility
 
-- Все пороги/параметры — в `shlifscan/config.py`. CLI-путь пишет полный
-  `run_log.json` (timestamp, весь config, список файлов) рядом с результатом;
-  веб-путь сохраняет тот же config в `runs/{id}/meta.json`, а версии моделей
-  отдаёт `/api/health`.
-- Обучение моделей: скрипты в `scripts/` с фиксированными сидами и
-  group-split по образцам (без утечек между train/val).
-- Разметка талька: маски строятся из экспертных синих обводок
-  (см. `scripts/train_talc.py --prepare-only`), ненадёжные маски исключаются
-  по отчёту качества.
+- All thresholds/parameters live in `shlifscan/config.py`. The CLI path writes a
+  full `run_log.json` (timestamp, the entire config, the file list) next to the
+  result; the web path saves the same config to `runs/{id}/meta.json`, and model
+  versions are served by `/api/health`.
+- Model training: scripts in `scripts/` with fixed seeds and a group-split by
+  sample (no train/val leakage).
+- Talc labelling: masks are built from expert blue outlines (see
+  `scripts/train_talc.py --prepare-only`); unreliable masks are excluded per a
+  quality report.
 
-## Дообучение (transfer learning)
+## Fine-tuning (transfer learning)
 
-Модель талька дообучается на новых данных: разметьте области (полигоны в
-веб-интерфейсе — roadmap, либо обводки в любом редакторе), затем:
+The talc model can be fine-tuned on new data: label the regions (polygons in the
+web UI — roadmap, or outlines in any editor), then:
 
 ```bash
-python scripts/train_talc.py --masks <папка с масками> --epochs 25
+python scripts/train_talc.py --masks <folder with masks> --epochs 25
 ```
 
-Классификатор срастаний переобучается за минуты:
-`scripts/extract_features.py` → GBM (см. README в scripts/).
+The intergrowth classifier retrains in minutes:
+`scripts/extract_features.py` → GBM (see the README in `scripts/`).
